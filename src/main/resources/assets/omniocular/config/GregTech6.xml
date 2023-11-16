@@ -28,7 +28,10 @@
 	</init>
 	
 	<init>
-	importClass(Packages.gregapi.oredict.OreDictMaterial);
+	try{
+		importClass(Packages.gregapi.oredict.OreDictMaterial);
+	}
+	catch(e){}
 	
 	function getMaterialName(aID){
 		var t = Packages.gregapi.oredict.OreDictMaterial.get(aID);
