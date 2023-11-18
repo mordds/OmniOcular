@@ -8,18 +8,77 @@
 <oo>
 
 	<!-- 关于脚本的一些配置 -->
+	<!-- 当EnableTempratureLimit = 1 且 CrucibleMaxShowTemp < 200的情况下，坩埚温度将不会显示 -->
 	<init>
+	importClass(Packages.gregapi.util.UT);
+	importClass(Packages.gregapi.data.MT);
 		function getConfig(aString){
 			switch(aString){
 				case "ScriptStyle":{return "2018a";}
 				case "ShowEnergyCache":{return 1;}
 				case "ShowTouchDamage":{return 1;}
 				case "ShowLiquidCache":{return 1;}
+				case "EnableTemperatureDisplay":{return 1;}
+				case "EnableTemperatureLimit":{return 0;}
+				case "CrucibleMaxShowTemp":{return 1800;}
 			}
+		}
+	</init>	
+	
+	<init>
+	try{
+		importClass(Packages.gregapi.block.multitileentity.MultiTileEntityRegistry);
+	}catch(e){}
+		
+	function getDefaultNBT(aID){
+		return MultiTileEntityRegistry.getRegistry("gt.multitileentity").getClassContainer(aID).mParameter;
+	}
+		
+	</init>
+	
+	<init>
+		function getReactorHeat(nbt){
+			var inv = nbt['gt.invlist'];
+			var heat = 0;
+			for(i = 0;i < 4;i++){
+				if(inv[i.toString()] == null) continue;
+				var type = getRodType(inv[i.toString()]['Damage']);
+				var neutron = nbt[("gt.value.o." + inv[i.toString()]['s'])];
+				if(neutron == undefined) continue;
+				switch(type){
+					case "breeder": {heat += neutron / 2;break;}
+					case "absorber": {heat += neutron * 2;break;}
+					case "fuel": {heat += neutron;break;}
+					default: continue;
+				}
+			}
+			
+			if(nbt['gt.tank.0']['FluidName'] == "molten.tin") {
+				if(heat % 3 == 0) return parseInt(heat / 3);
+				return parseInt(heat / 3) + 1;
+			}
+			if(nbt['gt.tank.0']['FluidName'] == "molten.sodium")  {
+				if(heat % 3 == 0) return parseInt(heat / 6);
+				return parseInt(heat / 6) + 1;
+			}
+			return heat;
 		}
 	</init>
 	
-
+	<init>
+		function getRodType(aID){
+			switch(aID){
+				case 9202: return "absorber";
+				case 9203: return "reflector";
+				case 9204: return "moderator";
+				default:
+					if(aID > 9400) return "breeder";
+					if(aID > 9300) return "none";
+					if(aID > 9209) return "fuel";
+					return "none";
+			}
+		}
+	</init>
 	
 	<init>
 		function getMaxTemperature(nbt){
@@ -40,10 +99,10 @@
 	</init>
 	
 	<init>
-		function getInternalODName(aID){
-			var t = Packages.gregapi.oredict.OreDictMaterial.get(aID);
-			return t.mNameInternal;
-		}
+	function getInternalODName(aID){
+		var t = Packages.gregapi.oredict.OreDictMaterial.get(aID);
+		return t.mNameInternal;
+	}
 	</init>
 	
 	<init>
@@ -74,6 +133,22 @@
 		return getWorld().func_72937_j(xPos,yPos,zPos);
 	}
 
+	
+	<init>
+	try{
+		importClass(Packages.gregapi.block.multitileentity.MultiTileEntityRegistry);
+		importClass(Packages.java.lang.reflect.Field);
+		importClass(Packages.java.lang.Class);
+	}catch(e){}
+	
+	function getTimer(tile){
+		var _class = Class.forName("gregapi.tileentity.base.TileEntityBase02AdjacentTEBuffer");
+		var _field = _class.getDeclaredField("mTimer");
+		_field.setAccessible(true);
+		return _field.get(tile);
+	}
+	
+	</init>
 	
 	<init>
 	 function getProcessPercent(mNBT){
@@ -688,7 +763,7 @@
                 case "gearGtSmall": {return "小型齿轮";}
                 case "ingot":{return "锭";}
                 case "nugget":{return "粒";}
-                case "plate":{return "小块板";}
+                case "plate":{return "板";}
                 case "plateGem":{return "板";}
                 case "plateGemTiny":{return "小块板";}
                 case "plateTiny":{return "小块板";}
@@ -1089,7 +1164,13 @@
 			}
 		</line>
 	    <line displayname = "当前温度">
-			return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+		if(getConfig("EnableTemperatureLimit") == 1){
+			if(getConfig("CrucibleMaxShowTemp") < 200) return null;
+			if(nbt['gt.temperature'] > getConfig("CrucibleMaxShowTemp")){
+				return ">" + nbt['gt.temperature']  + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+			}
+		}
+		return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
         </line>
 		
 		<line displayname = "熔炼物种数">
@@ -2090,10 +2171,15 @@
 	<tileentity id = "gt.multitileentity.multiblock.crucible">
  
 		
+		
 	    <line displayname = "当前温度">
-			if(nbt['gt.state.str'] != undefined){
-				return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+			if(getConfig("EnableTemperatureLimit") == 1){
+			if(getConfig("CrucibleMaxShowTemp") < 200) return null;
+			if(nbt['gt.temperature'] > getConfig("CrucibleMaxShowTemp")){
+				return ">" + nbt['gt.temperature']  + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
 			}
+		}
+		return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
         </line>
 		
 		<line displayname = "熔炼物种数">
@@ -3580,18 +3666,18 @@
 
 				if(nbt['gt.materials']['a'] != undefined){
 					switch(mDust){
-						case 0:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 / 9 * 1000) / 1000;break;}
-						case 1:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 1000) / 1000;break;}
-						case 2:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 4 * 1000) / 1000;break;}
-						case 3:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 9 * 1000) / 1000;break;}
-						case 4:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 72 * 1000) / 1000;break;}
+						case 0:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 / 9 * 1000) / 1000;break;}
+						case 1:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 1000) / 1000;break;}
+						case 2:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 4 * 1000) / 1000;break;}
+						case 3:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 9 * 1000) / 1000;break;}
+						case 4:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 72 * 1000) / 1000;break;}
 						case -1:{
 							switch(nbt['gt.mode']){
-								case 0:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 / 9 * 1000) / 1000;break;}
-								case 1:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 1000) / 1000;break;}
-								case 2:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 4 * 1000) / 1000;break;}
-								case 3:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 9 * 1000) / 1000;break;}
-								case 4:{mAmount += parseInt(nbt['gt.materials']['a'] / 420076800 * 72 * 1000) / 1000;break;}
+								case 0:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 / 9 * 1000) / 1000;break;}
+								case 1:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 1000) / 1000;break;}
+								case 2:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 4 * 1000) / 1000;break;}
+								case 3:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 9 * 1000) / 1000;break;}
+								case 4:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 72 * 1000) / 1000;break;}
 							}
 							break;
 						}	
@@ -4398,5 +4484,159 @@
 		<line displayname = "警告">
 			if(nbt['id'] != "gt.multitileentity.multiblock.part") return checkComplete(nbt);
 		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.generator.reactor.core.*">
+		<line displayname = "冷却介质">
+			return nbt['gt.tank.0']['Amount'] + " / 64000" +  Unit("L") + " " + fluidName(nbt['gt.tank.0']['FluidName']) ;
+		</line>
+		<line displayname = "热流体输出">
+			return nbt['gt.tank.1']['Amount'] + " / 64000" +  Unit("L") + " " + fluidName(nbt['gt.tank.1']['FluidName']) ;
+		</line>
+		<line displayname = "工作状态">	
+			if(nbt['gt.stopped'] == 1) return RED + "停机";
+			return GREEN + "运行中";
+		</line>
+		<line displayname = "热量输出">
+		try{
+			if(nbt['gt.stopped'] == undefined){
+					return getReactorHeat(nbt) + Unit("HU") + "/t";
+			}
+
+		}
+		catch(e){
+			
+		}
+			
+		</line>
+
+		<line displayname = "燃料棒1">
+			try{
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 0){
+
+						var str = name(nbt['gt.invlist'][i.toString()]);
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+			}catch(e){
+			}
+			
+		</line>
+		<line displayname = "燃料棒2">
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 1){
+					
+						var str = name(nbt['gt.invlist'][i.toString()]);
+						if(nbt['gt.invlist'][i.toString()]['tag']!= undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+		</line>
+		<line displayname = "燃料棒3">
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 2){
+						var str = name(nbt['gt.invlist'][i.toString()]);
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+		</line>
+		<line displayname = "燃料棒4">
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 3){
+						var str = name(nbt['gt.invlist'][i.toString()]); 
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+		</line>
+
+		<line displayname = "中子数">
+		try{
+			if(nbt['gt.stopped'] == 1) return undefined;
+			var n1,n2,n3,n4,str = "";
+			var inv = nbt['gt.invlist'];
+			for(i = 0;i < 4;i++){
+			if(inv[i.toString()] == null) continue;
+				switch(nbt['gt.invlist'][i.toString()]['s']){
+					case 0: {n1 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+					case 1: {n2 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+					case 2: {n3 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+					case 3: {n4 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+				}
+			}
+		if(n1 != undefined) str += "1: " + n1;
+		if(str != "" && n2 != undefined) str += " | ";
+		if(n2 != undefined) str += "2: " + n2;
+		if(str != "" && n3 != undefined) str += " | ";
+		if(n3 != undefined) str += "3: " + n3;
+		if(str != "" && n4 != undefined) str += " | ";
+		if(n4 != undefined) str += "4: " + n4;
+		if(str != "") return str;
+		else return undefined;
+		}catch(e){
+		}
+		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.multiblock.fusionreactor">
+		<line displayname = "配方需求能量">
+			if(nbt['gt.active'] != 1 && nbt['gt.input.eu'] != undefined) return nbt['gt.input.eu'] + Unit("LU");
+		</line>
+		
+		<line displayname = "能量输出">
+			if(nbt['gt.active'] == 1){
+				return nbt['gt.output'] + Unit("EU") + "/t";
+			}
+		</line>
+		
+		<line displayname = "配方进度">
+			if(nbt['gt.active'] == 1){
+				return (nbt['gt.progress'] / 20) + " / " + (nbt['gt.maxprogress'] / 20) +Unit("S") + " - " + parseInt(nbt['gt.progress'] / nbt['gt.maxprogress'] * 1000) / 10 + "%"
+			}
+		</line>
+		<line displayname = "正在加工">
+			if(nbt['gt.active'] != 1) return undefined;
+			var t1,t2,str = "";
+			if(nbt['gt.tankout.0'] != undefined) t1 = nbt['gt.tankout.0']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tankout.0']['FluidName']);
+			if(nbt['gt.tankout.1'] != undefined) t2 = nbt['gt.tankout.1']['Amount'] + Unit("L") + " "+ fluidName(nbt['gt.tankout.1']['FluidName']);
+			if(t1 != undefined){
+				str += t1;
+			}
+			if(t2 != undefined){
+				str += " | ";
+				str += t2;
+			}
+			return str;
+		</line>
+			<line displayname = "正在加工">
+			if(nbt['gt.active'] != 1) return undefined;
+			var t1,t2,str = "";
+			if(nbt['gt.tankout.2'] != undefined) t1 = nbt['gt.tankout.2']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tankout.2']['FluidName']);
+			if(nbt['gt.tankout.3'] != undefined) t2 = nbt['gt.tankout.3']['Amount'] + Unit("L") + " "+ fluidName(nbt['gt.tankout.3']['FluidName']);
+			if(t1 != undefined){
+				str += t1;
+			}
+			if(t2 != undefined){
+				str += " | ";
+				str += t2;
+			}
+			return str;
+		</line>
+		<line displayname = "正在加工">
+			if(nbt['gt.active'] != 1) return undefined;
+			if(nbt['gt.invout.0'] != undefined) return nbt['gt.invout.0']['Count'] + Unit("个") + " " + name(nbt['gt.invout.0']);
+		</line>
+		
 	</tileentity>
 </oo>
