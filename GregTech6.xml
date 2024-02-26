@@ -1,0 +1,4030 @@
+<!--Date: 2018/04/24-->
+<!--Version: 6.07.11-->
+<!--Update Date: 2023/3/1 -->
+<!--Updated Version: 6.15.01,Update Author:mordd -->
+<!--Update Date: 2023/11/16 -->
+<!--Updated Version 6.17.00,Updated Author:mordd -->
+<!--Update Date: 2024/3/1-->
+<!--Updated Version:6.17.01,Updated Author:mordd -->
+<oo>
+	<!--下列变量为脚本配置-->
+	<!--showTemprature 可用值:Always,Thermometer,Limit,Never.非法值将会视作Always-->
+	<!--tempLimit至少为373-->
+	<!--TODO: showFluidTank 和 showDamage 尚未正确实现 -->
+	<init>
+	var showTemprature = "TempLimit";
+	var tempLimit = 373;
+	var showDamage = true;
+	var showFluidTank = true;
+	var showProgress = true;
+	var enableTestContent = true;
+	</init>
+
+	<init>
+	importClass(Packages.net.minecraft.client.Minecraft);
+	var cout = Java.type("gregapi.data.CS").OUT;
+	var testClass = undefined;
+	var loader = Java.type("me.exz.omniocular.OmniOcular").class.getClassLoader();
+	
+	function parseString(s,c) {
+		var ByteArray = Java.type("byte[]");
+		var ret = new ByteArray(c);
+		for(i = 0;i < c;i++) {
+			var s2 = s.substring(0,2);
+			var val = 0;
+			if(s2.charCodeAt(0) > 0x40) val += 16 * (10 + s2.charCodeAt(0) - 0x41);
+			else val += 16 * (s2.charCodeAt(0) - 0x30);
+			if(s2.charCodeAt(1) > 0x40) val += (10 + s2.charCodeAt(1) - 0x41);
+			else val += (s2.charCodeAt(1) - 0x30);
+			ret[i] = val;
+			s = s.substring(3);
+		}
+		return ret;
+	}
+	
+	function init2(){
+	try{
+		try{
+			cout.println(loader);
+			var base = Java.type("java.lang.Class").forName("mordd.dynamic.GT6SpecialHandler",true,loader);
+			testClass = base;
+		}
+		catch(e){
+		var rawData = "CA FE BA BE 00 00 00 32 01 9A 01 00 1F 6D 6F 72 64 64 2F 64 79 6E 61 6D 69 63 2F 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 07 00 01 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 07 00 03 01 00 16 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 2E 6A 61 76 61 01 00 04 5A 4C 4F 41 01 00 13 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 01 00 0A 4E 55 4C 4C 5F 56 41 4C 55 45 01 00 12 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 01 00 07 56 45 52 53 49 4F 4E 01 00 01 49 03 00 00 00 00 01 00 0A 76 61 69 6C 64 53 74 61 63 6B 01 00 0F 4C 6A 61 76 61 2F 75 74 69 6C 2F 4D 61 70 3B 01 00 42 4C 6A 61 76 61 2F 75 74 69 6C 2F 4D 61 70 3C 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 3E 3B 01 00 08 69 6E 73 74 61 6E 63 65 01 00 21 4C 6D 6F 72 64 64 2F 64 79 6E 61 6D 69 63 2F 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 3B 01 00 0F 6C 61 73 74 52 65 71 75 65 73 74 54 69 63 6B 01 00 01 4A 01 00 0C 52 65 71 75 65 73 74 53 74 61 74 65 01 00 01 5A 01 00 07 74 6F 50 61 72 73 65 01 00 10 4C 6A 61 76 61 2F 75 74 69 6C 2F 4C 69 73 74 3B 01 00 24 4C 6A 61 76 61 2F 75 74 69 6C 2F 4C 69 73 74 3C 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 3E 3B 01 00 04 64 61 74 61 01 00 22 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 6E 62 74 2F 4E 42 54 54 61 67 43 6F 6D 70 6F 75 6E 64 3B 01 00 08 6C 61 73 74 44 61 74 61 01 00 06 3C 69 6E 69 74 3E 01 00 03 28 29 56 0C 00 1C 00 1D 0A 00 04 00 1E 0C 00 12 00 13 09 00 02 00 20 0C 00 14 00 15 09 00 02 00 22 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 53 79 73 74 65 6D 07 00 24 01 00 03 6F 75 74 01 00 15 4C 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 3B 0C 00 26 00 27 09 00 25 00 28 01 00 12 45 76 65 6E 74 20 52 65 67 69 73 74 65 72 69 6E 67 21 08 00 2A 01 00 13 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 07 00 2C 01 00 07 70 72 69 6E 74 6C 6E 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 0C 00 2E 00 2F 0A 00 2D 00 30 01 00 13 6A 61 76 61 2F 75 74 69 6C 2F 41 72 72 61 79 4C 69 73 74 07 00 32 0A 00 33 00 1E 0C 00 16 00 17 09 00 02 00 35 01 00 20 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 6E 62 74 2F 4E 42 54 54 61 67 43 6F 6D 70 6F 75 6E 64 07 00 37 0A 00 38 00 1E 0C 00 19 00 1A 09 00 02 00 3A 01 00 28 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6F 6D 6D 6F 6E 2F 4D 69 6E 65 63 72 61 66 74 46 6F 72 67 65 07 00 3C 01 00 09 45 56 45 4E 54 5F 42 55 53 01 00 2B 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 65 76 65 6E 74 68 61 6E 64 6C 65 72 2F 45 76 65 6E 74 42 75 73 3B 0C 00 3E 00 3F 09 00 3D 00 40 01 00 29 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 65 76 65 6E 74 68 61 6E 64 6C 65 72 2F 45 76 65 6E 74 42 75 73 07 00 42 01 00 08 72 65 67 69 73 74 65 72 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 56 0C 00 44 00 45 0A 00 43 00 46 01 00 04 74 68 69 73 01 00 0B 67 65 74 49 6E 73 74 61 6E 63 65 01 00 23 28 29 4C 6D 6F 72 64 64 2F 64 79 6E 61 6D 69 63 2F 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 3B 0C 00 10 00 11 09 00 02 00 4B 0A 00 02 00 1E 01 00 0E 73 65 6E 64 52 69 67 68 74 43 6C 69 63 6B 01 00 06 28 49 49 49 29 56 01 00 1E 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 4D 69 6E 65 63 72 61 66 74 07 00 50 01 00 0C 66 75 6E 63 5F 37 31 34 31 30 5F 78 01 00 22 28 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 4D 69 6E 65 63 72 61 66 74 3B 0C 00 52 00 53 0A 00 51 00 54 01 00 0D 66 69 65 6C 64 5F 37 31 34 34 31 5F 65 01 00 2E 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 57 6F 72 6C 64 43 6C 69 65 6E 74 3B 0C 00 56 00 57 09 00 51 00 58 01 00 2C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 57 6F 72 6C 64 43 6C 69 65 6E 74 07 00 5A 01 00 0C 66 75 6E 63 5F 37 32 38 32 30 5F 44 01 00 03 28 29 4A 0C 00 5C 00 5D 0A 00 5B 00 5E 05 00 00 00 00 00 00 00 05 01 00 0D 66 69 65 6C 64 5F 37 31 34 33 39 5F 67 01 00 32 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 65 6E 74 69 74 79 2F 45 6E 74 69 74 79 43 6C 69 65 6E 74 50 6C 61 79 65 72 4D 50 3B 0C 00 62 00 63 09 00 51 00 64 01 00 28 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 65 6E 74 69 74 79 2F 70 6C 61 79 65 72 2F 45 6E 74 69 74 79 50 6C 61 79 65 72 07 00 66 01 00 0D 66 69 65 6C 64 5F 37 30 31 36 35 5F 74 01 00 01 44 0C 00 68 00 69 09 00 67 00 6A 06 40 00 00 00 00 00 00 00 01 00 0E 6A 61 76 61 2F 6C 61 6E 67 2F 4D 61 74 68 07 00 6E 01 00 03 70 6F 77 01 00 05 28 44 44 29 44 0C 00 70 00 71 0A 00 6F 00 72 01 00 0D 66 69 65 6C 64 5F 37 30 31 36 33 5F 75 0C 00 74 00 69 09 00 67 00 75 01 00 0D 66 69 65 6C 64 5F 37 30 31 36 31 5F 76 0C 00 77 00 69 09 00 67 00 78 06 40 30 00 00 00 00 00 00 01 00 0D 66 75 6E 63 5F 37 30 36 39 34 5F 62 6D 01 00 20 28 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 0C 00 7C 00 7D 0A 00 67 00 7E 0C 00 0D 00 0E 09 00 02 00 80 01 00 0D 6A 61 76 61 2F 75 74 69 6C 2F 4D 61 70 07 00 82 01 00 06 6B 65 79 53 65 74 01 00 11 28 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 53 65 74 3B 0C 00 84 00 85 0B 00 83 00 86 01 00 0D 6A 61 76 61 2F 75 74 69 6C 2F 53 65 74 07 00 88 01 00 08 69 74 65 72 61 74 6F 72 01 00 16 28 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 49 74 65 72 61 74 6F 72 3B 0C 00 8A 00 8B 0B 00 89 00 8C 01 00 1C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 07 00 8E 01 00 12 6A 61 76 61 2F 75 74 69 6C 2F 49 74 65 72 61 74 6F 72 07 00 90 01 00 07 68 61 73 4E 65 78 74 01 00 03 28 29 5A 0C 00 92 00 93 0B 00 91 00 94 01 00 04 6E 65 78 74 01 00 14 28 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 96 00 97 0B 00 91 00 98 01 00 0C 66 75 6E 63 5F 37 37 39 36 39 5F 61 01 00 21 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 29 5A 0C 00 9A 00 9B 0A 00 8F 00 9C 01 00 03 67 65 74 01 00 26 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 9E 00 9F 0B 00 83 00 A0 01 00 13 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 07 00 A2 01 00 0A 61 64 64 50 61 74 74 65 72 6E 0C 00 A4 00 2F 0A 00 02 00 A5 01 00 01 78 08 00 A7 01 00 0C 66 75 6E 63 5F 37 34 37 37 32 5F 61 01 00 16 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 4A 29 56 0C 00 A9 00 AA 0A 00 38 00 AB 01 00 01 79 08 00 AD 01 00 01 7A 08 00 AF 01 00 0D 66 69 65 6C 64 5F 37 31 34 34 32 5F 62 01 00 35 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 50 6C 61 79 65 72 43 6F 6E 74 72 6F 6C 6C 65 72 4D 50 3B 0C 00 B1 00 B2 09 00 51 00 B3 01 00 0D 66 69 65 6C 64 5F 37 30 31 37 30 5F 70 01 00 1B 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 77 6F 72 6C 64 2F 57 6F 72 6C 64 3B 0C 00 B5 00 B6 09 00 67 00 B7 01 00 17 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 56 65 63 33 07 00 B9 01 00 0C 66 75 6E 63 5F 37 32 34 34 33 5F 61 01 00 1E 28 44 44 44 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 56 65 63 33 3B 0C 00 BB 00 BC 0A 00 BA 00 BD 01 00 33 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 50 6C 61 79 65 72 43 6F 6E 74 72 6F 6C 6C 65 72 4D 50 07 00 BF 01 00 0C 66 75 6E 63 5F 37 38 37 36 30 5F 61 01 00 83 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 65 6E 74 69 74 79 2F 70 6C 61 79 65 72 2F 45 6E 74 69 74 79 50 6C 61 79 65 72 3B 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 77 6F 72 6C 64 2F 57 6F 72 6C 64 3B 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 49 49 49 49 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 56 65 63 33 3B 29 5A 0C 00 C1 00 C2 0A 00 C0 00 C3 01 00 01 69 01 00 01 73 01 00 1E 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 01 00 0B 63 75 72 72 65 6E 74 54 69 63 6B 01 00 06 70 6C 61 79 65 72 01 00 2A 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 65 6E 74 69 74 79 2F 70 6C 61 79 65 72 2F 45 6E 74 69 74 79 50 6C 61 79 65 72 3B 01 00 01 64 01 00 08 68 65 6C 64 49 74 65 6D 01 00 07 67 65 74 44 61 74 61 01 00 14 28 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 01 00 13 6A 61 76 61 2F 6C 61 6E 67 2F 45 78 63 65 70 74 69 6F 6E 07 00 CF 01 00 20 6D 65 2E 65 78 7A 2E 6F 6D 6E 69 6F 63 75 6C 61 72 2E 75 74 69 6C 2E 4E 42 54 48 65 6C 70 65 72 08 00 D1 01 00 0F 6A 61 76 61 2F 6C 61 6E 67 2F 43 6C 61 73 73 07 00 D3 01 00 07 66 6F 72 4E 61 6D 65 01 00 25 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 43 6C 61 73 73 3B 0C 00 D5 00 D6 0A 00 D4 00 D7 01 00 08 4E 42 54 32 6A 73 6F 6E 08 00 D9 01 00 19 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 6E 62 74 2F 4E 42 54 42 61 73 65 07 00 DB 01 00 09 67 65 74 4D 65 74 68 6F 64 01 00 40 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 43 6C 61 73 73 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 72 65 66 6C 65 63 74 2F 4D 65 74 68 6F 64 3B 0C 00 DD 00 DE 0A 00 D4 00 DF 0C 00 1B 00 1A 09 00 02 00 E1 01 00 18 6A 61 76 61 2F 6C 61 6E 67 2F 72 65 66 6C 65 63 74 2F 4D 65 74 68 6F 64 07 00 E3 01 00 06 69 6E 76 6F 6B 65 01 00 39 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 E5 00 E6 0A 00 E4 00 E7 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 07 00 E9 01 00 0F 70 72 69 6E 74 53 74 61 63 6B 54 72 61 63 65 0C 00 EB 00 1D 0A 00 D0 00 EC 01 00 01 6D 01 00 1A 4C 6A 61 76 61 2F 6C 61 6E 67 2F 72 65 66 6C 65 63 74 2F 4D 65 74 68 6F 64 3B 01 00 01 65 01 00 15 4C 6A 61 76 61 2F 6C 61 6E 67 2F 45 78 63 65 70 74 69 6F 6E 3B 01 00 0E 6A 61 76 61 2F 75 74 69 6C 2F 4C 69 73 74 07 00 F2 01 00 03 61 64 64 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 5A 0C 00 F4 00 F5 0B 00 F3 00 F6 01 00 12 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 01 00 0B 70 61 72 73 65 53 74 72 69 6E 67 01 00 26 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 3B 29 56 0B 00 F3 00 8C 01 00 0E 2F 2F 20 28 5C 53 2B 20 3F 29 7B 31 2C 7D 08 00 FC 01 00 17 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 50 61 74 74 65 72 6E 07 00 FE 01 00 07 63 6F 6D 70 69 6C 65 01 00 2D 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 50 61 74 74 65 72 6E 3B 0C 01 00 01 01 0A 00 FF 01 02 01 00 05 28 5C 53 2B 29 08 01 04 01 00 2A 28 5C 28 5C 5C 64 5C 2E 5C 3F 5C 5C 64 5C 2A 5C 29 29 7C 28 5C 28 5C 5C 64 5C 2B 5C 29 29 7C 28 5C 28 5C 5C 53 5C 2B 5C 29 29 08 01 06 01 00 21 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 07 01 08 01 00 07 6D 61 74 63 68 65 72 01 00 33 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 43 68 61 72 53 65 71 75 65 6E 63 65 3B 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 4D 61 74 63 68 65 72 3B 0C 01 0A 01 0B 0A 00 FF 01 0C 01 00 17 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 4D 61 74 63 68 65 72 07 01 0E 01 00 04 66 69 6E 64 0C 01 10 00 93 0A 01 0F 01 11 01 00 0D 66 75 6E 63 5F 31 35 30 32 36 30 5F 63 0C 01 13 00 CE 0B 01 09 01 14 01 00 07 6D 61 74 63 68 65 73 0C 01 16 00 93 0A 01 0F 01 17 01 00 08 64 65 6C 5F 2D 2B 3D 5C 08 01 19 01 00 0D 66 75 6E 63 5F 31 35 30 32 35 38 5F 61 01 00 37 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 3B 0C 01 1B 01 1C 0B 01 09 01 1D 01 00 06 72 65 6D 6F 76 65 0C 01 1F 00 F5 0B 00 F3 01 20 01 00 05 73 74 61 72 74 01 00 03 28 29 49 0C 01 22 01 23 0A 01 0F 01 24 01 00 09 73 75 62 73 74 72 69 6E 67 01 00 16 28 49 49 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 0C 01 26 01 27 0A 00 EA 01 28 01 00 15 28 49 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 0C 01 26 01 2A 0A 00 EA 01 2B 01 00 05 67 72 6F 75 70 0C 01 2D 01 2A 0A 01 0F 01 2E 01 00 0A 67 72 6F 75 70 43 6F 75 6E 74 0C 01 30 01 23 0A 01 0F 01 31 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 44 6F 75 62 6C 65 07 01 33 01 00 0B 70 61 72 73 65 44 6F 75 62 6C 65 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 44 0C 01 35 01 36 0A 01 34 01 37 01 00 15 28 49 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 9E 01 39 0B 00 F3 01 3A 01 00 0C 66 75 6E 63 5F 37 34 37 38 30 5F 61 01 00 16 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 44 29 56 0C 01 3C 01 3D 0A 00 38 01 3E 01 00 0E 6A 61 76 61 2F 6C 61 6E 67 2F 4C 6F 6E 67 07 01 40 01 00 09 70 61 72 73 65 4C 6F 6E 67 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4A 0C 01 42 01 43 0A 01 41 01 44 01 00 0C 66 75 6E 63 5F 37 34 37 37 38 5F 61 01 00 27 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 0C 01 46 01 47 0A 00 38 01 48 01 00 01 70 01 00 19 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 50 61 74 74 65 72 6E 3B 01 00 01 6A 01 00 01 6C 01 00 02 73 34 01 00 04 74 79 70 65 01 00 02 73 32 01 00 02 73 33 01 00 02 6D 34 01 00 19 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 4D 61 74 63 68 65 72 3B 01 00 02 6D 32 01 00 02 6D 33 01 00 23 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 3B 01 00 02 69 74 01 00 14 4C 6A 61 76 61 2F 75 74 69 6C 2F 49 74 65 72 61 74 6F 72 3B 01 00 07 76 61 72 4C 69 73 74 01 00 03 73 74 64 01 00 06 72 65 61 64 65 72 01 00 0A 74 79 70 65 52 65 61 64 65 72 01 00 0D 6F 6E 52 65 63 65 69 76 65 43 68 61 74 01 00 3C 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6C 69 65 6E 74 2F 65 76 65 6E 74 2F 43 6C 69 65 6E 74 43 68 61 74 52 65 63 65 69 76 65 64 45 76 65 6E 74 3B 29 56 01 00 31 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 65 76 65 6E 74 68 61 6E 64 6C 65 72 2F 53 75 62 73 63 72 69 62 65 45 76 65 6E 74 3B 01 00 22 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 72 65 6C 61 75 6E 63 68 65 72 2F 53 69 64 65 4F 6E 6C 79 3B 01 00 05 76 61 6C 75 65 01 00 1E 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 72 65 6C 61 75 6E 63 68 65 72 2F 53 69 64 65 3B 01 00 06 43 4C 49 45 4E 54 01 00 37 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6C 69 65 6E 74 2F 65 76 65 6E 74 2F 43 6C 69 65 6E 74 43 68 61 74 52 65 63 65 69 76 65 64 45 76 65 6E 74 07 01 64 01 00 07 6D 65 73 73 61 67 65 0C 01 66 01 56 09 01 65 01 67 0C 00 F9 00 FA 0A 00 02 01 69 01 00 08 65 6E 64 73 57 69 74 68 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 5A 0C 01 6B 01 6C 0A 00 EA 01 6D 01 00 07 69 73 45 6D 70 74 79 0C 01 6F 00 93 0B 00 F3 01 70 01 00 39 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6C 69 65 6E 74 2F 65 76 65 6E 74 2F 43 6C 69 65 6E 74 43 68 61 74 52 65 63 65 69 76 65 64 45 76 65 6E 74 3B 01 00 08 3C 63 6C 69 6E 69 74 3E 0C 00 06 00 07 09 00 02 01 74 0C 00 08 00 09 09 00 02 01 76 01 00 11 6A 61 76 61 2F 75 74 69 6C 2F 48 61 73 68 4D 61 70 07 01 78 0A 01 79 00 1E 01 00 08 67 72 65 67 74 65 63 68 08 01 7B 01 00 18 67 74 2E 6D 75 6C 74 69 69 74 65 6D 2E 72 61 6E 64 6F 6D 74 6F 6F 6C 73 08 01 7D 01 00 29 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 72 65 67 69 73 74 72 79 2F 47 61 6D 65 52 65 67 69 73 74 72 79 07 01 7F 01 00 08 66 69 6E 64 49 74 65 6D 01 00 3F 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 3B 0C 01 81 01 82 0A 01 80 01 83 01 00 1E 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 3B 49 49 29 56 0C 00 1C 01 85 0A 00 8F 01 86 01 00 0F 28 5C 64 2B 29 45 55 2F 74 20 2F 2F 20 65 75 08 01 88 01 00 03 70 75 74 01 00 38 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 01 8A 01 8B 0B 00 83 01 8C 01 00 0F 28 5C 64 2B 29 52 55 2F 74 20 2F 2F 20 72 75 08 01 8E 01 00 19 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 3B 01 00 0D 43 6F 6E 73 74 61 6E 74 56 61 6C 75 65 01 00 09 53 69 67 6E 61 74 75 72 65 01 00 04 43 6F 64 65 01 00 12 4C 6F 63 61 6C 56 61 72 69 61 62 6C 65 54 61 62 6C 65 01 00 0F 4C 69 6E 65 4E 75 6D 62 65 72 54 61 62 6C 65 01 00 0D 53 74 61 63 6B 4D 61 70 54 61 62 6C 65 01 00 16 4C 6F 63 61 6C 56 61 72 69 61 62 6C 65 54 79 70 65 54 61 62 6C 65 01 00 19 52 75 6E 74 69 6D 65 56 69 73 69 62 6C 65 41 6E 6E 6F 74 61 74 69 6F 6E 73 01 00 0A 53 6F 75 72 63 65 46 69 6C 65 00 21 00 02 00 04 00 00 00 0A 00 19 00 06 00 07 00 00 00 19 00 08 00 09 00 00 00 19 00 0A 00 0B 00 01 01 91 00 00 00 02 00 0C 00 09 00 0D 00 0E 00 01 01 92 00 00 00 02 00 0F 00 09 00 10 00 11 00 00 00 01 00 12 00 13 00 00 00 01 00 14 00 15 00 00 00 01 00 16 00 17 00 01 01 92 00 00 00 02 00 18 00 01 00 19 00 1A 00 00 00 01 00 1B 00 1A 00 00 00 08 00 02 00 1C 00 1D 00 01 01 93 00 00 00 7A 00 03 00 01 00 00 00 34 2A B7 00 1F 2A 09 B5 00 21 2A 03 B5 00 23 B2 00 29 12 2B B6 00 31 2A BB 00 33 59 B7 00 34 B5 00 36 2A BB 00 38 59 B7 00 39 B5 00 3B B2 00 41 2A B6 00 47 B1 00 00 00 02 01 94 00 00 00 0C 00 01 00 00 00 34 00 48 00 11 00 00 01 95 00 00 00 22 00 08 00 00 00 30 00 04 00 26 00 09 00 27 00 0E 00 31 00 16 00 32 00 21 00 33 00 2C 00 34 00 33 00 35 00 09 00 49 00 4A 00 01 01 93 00 00 00 3D 00 02 00 00 00 00 00 14 B2 00 4C C7 00 0D BB 00 02 59 B7 00 4D B3 00 4C B2 00 4C B0 00 00 00 02 01 95 00 00 00 0E 00 03 00 00 00 37 00 06 00 38 00 10 00 3B 01 96 00 00 00 03 00 01 10 00 01 00 4E 00 4F 00 01 01 93 00 00 02 23 00 0E 00 0D 00 00 01 27 B8 00 55 B4 00 59 B6 00 5F 37 04 16 04 2A B4 00 21 65 14 00 60 94 9C 00 04 B1 B8 00 55 B4 00 65 3A 06 19 06 B4 00 6B 1B 87 67 14 00 6C B8 00 73 19 06 B4 00 76 1C 87 67 14 00 6C B8 00 73 63 19 06 B4 00 79 1D 87 67 14 00 6C B8 00 73 63 39 07 18 07 14 00 7A 97 9E 00 04 B1 19 06 B6 00 7F 3A 09 B2 00 81 B9 00 87 01 00 B9 00 8D 01 00 3A 0A 19 0A B9 00 95 01 00 99 00 AF 19 0A B9 00 99 01 00 C0 00 8F 3A 0B 19 0B 19 09 B6 00 9D 99 00 96 03 36 0C 15 0C B2 00 81 19 0B B9 00 A1 02 00 C0 00 A3 BE A2 00 1D 2A B2 00 81 19 0B B9 00 A1 02 00 C0 00 A3 15 0C 32 B6 00 A6 84 0C 01 A7 FF D6 2A BB 00 38 59 B7 00 39 B5 00 3B 2A B4 00 3B 12 A8 1B 85 B6 00 AC 2A B4 00 3B 12 AE 1C 85 B6 00 AC 2A B4 00 3B 12 B0 1D 85 B6 00 AC B8 00 55 B4 00 B4 19 06 19 06 B4 00 B8 19 06 B6 00 7F 1B 1C 1D 03 1B 86 0B 62 8D 1C 86 0B 62 8D 1D 86 0B 62 8D B8 00 BE B6 00 C4 57 2A 16 04 B5 00 21 2A 04 B5 00 23 A7 FF 4D B1 00 00 00 03 01 94 00 00 00 66 00 0A 00 93 00 2D 00 C5 00 0B 00 0C 00 86 00 9D 00 C6 00 C7 00 0B 00 00 01 27 00 48 00 11 00 00 00 00 01 27 00 A7 00 0B 00 01 00 00 01 27 00 AD 00 0B 00 02 00 00 01 27 00 AF 00 0B 00 03 00 0B 01 1C 00 C8 00 13 00 04 00 22 01 05 00 C9 00 CA 00 06 00 50 00 D7 00 CB 00 69 00 07 00 61 00 C6 00 CC 00 C7 00 09 01 95 00 00 00 52 00 14 00 00 00 3F 00 0B 00 40 00 1A 00 41 00 22 00 42 00 50 00 43 00 5A 00 44 00 61 00 45 00 86 00 46 00 90 00 47 00 A6 00 48 00 BA 00 47 00 C0 00 4A 00 CB 00 4B 00 D6 00 4C 00 E1 00 4D 00 EC 00 4E 01 18 00 4F 01 1E 00 50 01 23 00 52 01 26 00 53 01 96 00 00 00 26 00 07 FC 00 1A 04 FD 00 3F 07 00 67 03 FD 00 15 07 00 8F 07 00 91 FD 00 22 07 00 8F 01 FA 00 2C FA 00 62 FA 00 02 00 01 00 CD 00 CE 00 01 01 93 00 00 00 B5 00 06 00 02 00 00 00 38 12 D2 B8 00 D8 12 DA 04 BD 00 D4 59 03 12 DC 53 B6 00 E0 4C 2A B4 00 E2 C6 00 17 2B 01 04 BD 00 04 59 03 2A B4 00 E2 53 B6 00 E8 C0 00 EA B0 01 B0 4C 2B B6 00 ED 01 B0 00 02 00 00 00 2E 00 31 00 D0 00 2F 00 30 00 31 00 D0 00 03 01 94 00 00 00 20 00 03 00 14 00 1D 00 EE 00 EF 00 01 00 32 00 06 00 F0 00 F1 00 01 00 00 00 38 00 48 00 11 00 00 01 95 00 00 00 1A 00 06 00 00 00 56 00 14 00 57 00 2F 00 58 00 31 00 59 00 32 00 5A 00 36 00 5B 01 96 00 00 00 15 00 02 FC 00 2F 07 00 E4 FF 00 01 00 01 07 00 02 00 01 07 00 D0 00 01 00 A4 00 2F 00 01 01 93 00 00 00 58 00 02 00 02 00 00 00 13 2A B4 00 23 9A 00 0E 2A B4 00 36 2B B9 00 F7 02 00 57 B1 00 00 00 03 01 94 00 00 00 16 00 02 00 00 00 13 00 48 00 11 00 00 00 00 00 13 00 C6 00 F8 00 01 01 95 00 00 00 0E 00 03 00 00 00 5F 00 07 00 60 00 12 00 62 01 96 00 00 00 03 00 01 12 00 01 00 F9 00 FA 00 01 01 93 00 00 04 0A 00 04 00 16 00 00 01 B5 2A B4 00 36 B9 00 FB 01 00 4D BB 00 33 59 B7 00 34 4E 12 FD B8 01 03 3A 04 13 01 05 B8 01 03 3A 05 13 01 07 B8 01 03 3A 06 2C B9 00 95 01 00 99 01 85 2C B9 00 99 01 00 C0 00 EA 3A 07 19 04 19 07 B6 01 0D 3A 08 19 08 B6 01 12 9A 00 32 19 07 B8 01 03 3A 09 19 09 2B B9 01 15 01 00 B6 01 0D B6 01 18 99 FF C6 2B 13 01 1A B9 01 1E 02 00 57 2A B4 00 36 19 07 B9 01 21 02 00 57 B1 19 07 03 19 08 B6 01 25 04 64 B6 01 29 3A 09 19 07 19 08 B6 01 25 06 60 B6 01 2C 3A 0A 19 09 B8 01 03 3A 0B 19 0B 2B B9 01 15 01 00 B6 01 0D 3A 0C 19 0C B6 01 18 9A 00 06 A7 FF 73 19 05 19 0A B6 01 0D 3A 0D 19 0D B6 01 12 99 00 13 2D 19 0D 04 B6 01 2F B9 00 F7 02 00 57 A7 FF EB 19 06 19 09 B6 01 0D 3A 0E 04 36 0F 15 0F 19 08 B6 01 32 A3 00 B0 19 0E B6 01 12 57 03 36 10 04 36 11 15 11 06 A3 00 1A 19 0E 15 11 B6 01 2F C6 00 0A 15 11 36 10 A7 00 09 84 11 01 A7 FF E6 15 10 AA 00 00 00 7C 00 00 00 01 00 00 00 03 00 00 00 19 00 00 00 3C 00 00 00 5F 19 0C 15 0F B6 01 2F B8 01 38 39 11 2A B4 00 3B 2D 15 0F B9 01 3B 02 00 C0 00 EA 18 11 B6 01 3F A7 00 43 19 0C 15 0F B6 01 2F B8 01 45 37 13 2A B4 00 3B 2D 15 0F B9 01 3B 02 00 C0 00 EA 16 13 B6 00 AC A7 00 20 19 0C 15 0F B6 01 2F 3A 15 2A B4 00 3B 2D 15 0F B9 01 3B 02 00 C0 00 EA 19 15 B6 01 49 84 0F 01 A7 FF 4C 2B 13 01 1A B9 01 1E 02 00 57 2A B4 00 36 19 07 B9 01 21 02 00 57 B1 B1 00 00 00 04 01 94 00 00 00 DE 00 16 00 55 00 28 01 4A 01 4B 00 09 00 FC 00 1D 01 4C 00 0B 00 11 01 40 00 17 00 CB 00 69 00 11 01 63 00 17 01 4D 00 13 00 13 01 83 00 14 01 4E 00 F8 00 15 00 F9 00 9E 01 4F 00 0B 00 10 00 E6 00 B7 00 C5 00 0B 00 0F 00 8C 01 28 01 50 00 F8 00 09 00 9A 01 1A 01 51 00 F8 00 0A 00 A1 01 13 01 4A 01 4B 00 0B 00 AE 01 06 01 52 01 53 00 0C 00 C2 00 F2 01 54 01 53 00 0D 00 E3 00 D1 01 55 01 53 00 0E 00 3D 01 77 00 96 00 F8 00 07 00 46 01 6E 00 EE 01 53 00 08 00 00 01 B5 00 48 00 11 00 00 00 00 01 B5 00 C6 01 56 00 01 00 0A 01 AB 01 57 01 58 00 02 00 12 01 A3 01 59 00 17 00 03 00 19 01 9C 01 5A 01 4B 00 04 00 21 01 94 01 5B 01 4B 00 05 00 29 01 8C 01 5C 01 4B 00 06 01 97 00 00 00 0C 00 01 00 12 01 A3 01 59 00 18 00 03 01 95 00 00 00 B6 00 2D 00 00 00 64 00 0A 00 65 00 12 00 66 00 19 00 67 00 21 00 68 00 29 00 6B 00 32 00 6C 00 3D 00 6D 00 46 00 6E 00 4E 00 6F 00 55 00 70 00 66 00 71 00 70 00 72 00 7C 00 73 00 7D 00 78 00 8C 00 79 00 9A 00 7B 00 A1 00 7D 00 AE 00 7E 00 B9 00 80 00 C2 00 81 00 CA 00 82 00 DA 00 84 00 E3 00 85 00 F0 00 86 00 F6 00 87 00 F9 00 88 01 02 00 89 01 0C 00 8A 01 10 00 8B 01 13 00 88 01 19 00 8E 01 34 00 90 01 40 00 91 01 54 00 92 01 57 00 94 01 63 00 95 01 77 00 96 01 7A 00 98 01 83 00 99 01 97 00 85 01 9D 00 9D 01 A7 00 9E 01 B3 00 9F 01 B4 00 A2 01 96 00 00 00 91 00 0F FF 00 29 00 07 07 00 02 07 01 09 07 00 91 07 00 F3 07 00 FF 07 00 FF 07 00 FF 00 00 FD 00 53 07 00 EA 07 01 0F FF 00 3B 00 0D 07 00 02 07 01 09 07 00 91 07 00 F3 07 00 FF 07 00 FF 07 00 FF 07 00 EA 07 01 0F 07 00 EA 07 00 EA 07 00 FF 07 01 0F 00 00 FC 00 08 07 01 0F 17 FD 00 0B 07 01 0F 01 FD 00 15 01 01 16 FA 00 05 1A 22 22 FA 00 1C FA 00 05 FF 00 16 00 07 07 00 02 07 01 09 07 00 91 07 00 F3 07 00 FF 07 00 FF 07 00 FF 00 00 00 01 01 5D 01 5E 00 02 01 93 00 00 00 B6 00 03 00 02 00 00 00 5C B2 00 29 2B B4 01 68 B9 01 15 01 00 B6 00 31 2A 2B B4 01 68 B6 01 6A 2B B4 01 68 B9 01 15 01 00 13 01 1A B6 01 6E 99 00 08 2B 01 B5 01 68 2A B4 00 36 B9 01 71 01 00 99 00 24 2A B4 00 23 99 00 1D 2A 03 B5 00 23 2A 2A B4 00 3B B5 00 E2 2A B8 00 55 B4 00 59 B6 00 5F B5 00 21 B1 00 00 00 03 01 94 00 00 00 16 00 02 00 00 00 5C 00 48 00 11 00 00 00 00 00 5C 00 F0 01 72 00 01 01 95 00 00 00 22 00 08 00 00 00 A7 00 0F 00 A8 00 17 00 A9 00 2E 00 AA 00 41 00 AB 00 46 00 AC 00 4E 00 AD 00 5B 00 AF 01 96 00 00 00 04 00 02 2E 2C 01 98 00 00 00 11 00 02 01 5F 00 00 01 60 00 01 01 61 65 01 62 01 63 00 08 01 73 00 1D 00 01 01 93 00 00 00 AE 00 06 00 01 00 00 00 68 03 BD 00 04 B3 01 75 01 B3 01 77 BB 01 79 59 B7 01 7A B3 00 81 BB 00 02 59 B7 00 4D B3 00 4C 13 01 7C 13 01 7E B8 01 84 4B B2 00 81 BB 00 8F 59 2A 04 11 27 13 B7 01 87 04 BD 00 EA 59 03 13 01 89 53 B9 01 8D 03 00 57 B2 00 81 BB 00 8F 59 2A 04 11 27 14 B7 01 87 04 BD 00 EA 59 03 13 01 8F 53 B9 01 8D 03 00 57 B1 00 00 00 02 01 94 00 00 00 0C 00 01 00 29 00 3E 00 C5 01 90 00 00 01 95 00 00 00 22 00 08 00 00 00 20 00 07 00 21 00 0B 00 23 00 15 00 24 00 1F 00 2B 00 29 00 2C 00 48 00 2D 00 67 00 2E 00 01 01 99 00 00 00 02 00 05 ";
+		var data = parseString(rawData,8225);
+		var loader2 = Java.type("java.lang.ClassLoader").class;
+		var methods = loader2.getDeclaredMethods();
+		var d2 = Java.type("java.lang.String");
+		var d3 = new d2("mordd.dynamic.GT6SpecialHandler");
+		cout.println(d3.getClass().getCanonicalName());
+		var dfs = undefined;
+		
+		for(i = 0;i < methods.length;i++){
+			if(methods[i].getName() == "defineClass" && methods[i].getParameterCount() == 4) dfs = methods[i];
+		}
+		dfs.setAccessible(true);
+		dfs.invoke(loader,d3,data,0,data.length);
+		testClass = Java.type("java.lang.Class").forName("mordd.dynamic.GT6SpecialHandler",true,loader);
+		cout.printf("Loaded Dynamic Class!");
+		return 0;
+		}
+	}catch(e){
+		cout.println(e.name);
+		cout.println(e.message);
+		return -1;
+	}
+	try{
+		var text = Java.type("net.minecraft.util.ChatComponentText");
+		Minecraft.func_71410_x().field_71439_g.func_146105_b(new text("reload complete."));
+	}
+	catch(e){
+		cout.println(e.name); 
+		cout.println(e.message);
+	}
+		return 1;
+	}
+	function getInstance(){
+		if(testClass != undefined) return testClass.getMethod("getInstance").invoke(null);
+		else return null;
+	}
+	function init(){
+		if(enableTestContent) init2();
+		if(tempLimit < 373) tempLimit = 373;
+		switch(showTemprature){
+			case "Always":break;
+			case "Never":break;
+			case "Thermometer":break;
+			case "TempLimit":break;
+			default: showTemprature = "Always";
+		}
+	}
+	</init>
+	
+	<init>
+	var state = init();
+	var instance = getInstance();
+	</init>
+	<init>
+	
+	function getWorld(){
+		return Minecraft.func_71410_x().field_71441_e;
+	}
+	</init>
+	<init>
+	importClass(Packages.java.lang.reflect.Field);
+	importClass(Packages.java.lang.Class);
+	
+	function getPlayer(){
+		return Minecraft.func_71410_x().field_71439_g;
+	}
+	</init>
+	
+	<init>
+	function nbt2json(tagCompound){
+		var str = Java.type("me.exz.omniocular.util.NBTHelper").NBT2json(tagCompound);
+		return eval("("+str+")");
+	}
+	</init>
+	
+	<init>
+	try{
+		importClass(Packages.gregapi.block.multitileentity.MultiTileEntityRegistry);
+	}catch(e){}
+		
+	function getDefaultNBT(aID){
+		return nbt2json(MultiTileEntityRegistry.getRegistry("gt.multitileentity").getClassContainer(aID).mParameters);
+	}
+		
+	</init>
+	
+	<init>
+		function getReactorHeat(nbt){
+			var inv = nbt['gt.invlist'];
+			var heat = 0;
+			for(i = 0;i < 4;i++){
+				if(inv[i.toString()] == null) continue;
+				var type = getRodType(inv[i.toString()]['Damage']);
+				var neutron = nbt[("gt.value.o." + inv[i.toString()]['s'])];
+				if(neutron == undefined) continue;
+				switch(type){
+					case "breeder": {heat += neutron / 2;break;}
+					case "absorber": {heat += neutron * 2;break;}
+					case "fuel": {heat += neutron;break;}
+					default: continue;
+				}
+			}
+			
+			if(nbt['gt.tank.0']['FluidName'] == "molten.tin") {
+				if(heat % 3 == 0) return parseInt(heat / 3);
+				return parseInt(heat / 3) + 1;
+			}
+			if(nbt['gt.tank.0']['FluidName'] == "molten.sodium")  {
+				if(heat % 3 == 0) return parseInt(heat / 6);
+				return parseInt(heat / 6) + 1;
+			}
+			return heat;
+		}
+	</init>
+	
+	<init>
+		function getRodType(aID){
+			switch(aID){
+				case 9202: return "absorber";
+				case 9203: return "reflector";
+				case 9204: return "moderator";
+				default:
+					if(aID > 9400) return "breeder";
+					if(aID > 9300) return "none";
+					if(aID > 9209) return "fuel";
+					return "none";
+			}
+		}
+	</init>
+	
+	<init>
+	function getMaxTemperature(nbt){
+		return getWorld().func_147438_o(nbt['x'],nbt['y'],nbt['z']).getTemperatureMax(0);
+	}
+	</init>
+	
+	<init>
+	try{
+		importClass(Packages.gregapi.oredict.OreDictMaterial);
+	}
+	catch(e){}
+	
+	function getMaterialName(aID){
+		var t = Packages.gregapi.oredict.OreDictMaterial.get(aID);
+		return translate("gt.material." + t.mNameInternal);
+	}
+	</init>
+	
+	<init>
+	function getInternalODName(aID){
+		var t = Packages.gregapi.oredict.OreDictMaterial.get(aID);
+		return t.mNameInternal;
+	}
+	</init>
+	
+	<init>
+	function isRaining(){
+		return getWorld().func_72896_J();
+	}
+	</init>
+	function canBlockSeeSky(xPos,yPos,zPos){
+		return getWorld().func_72937_j(xPos,yPos,zPos);
+	}
+
+	<init>
+	function ID2Tier_(mID){
+		
+	}
+	</init>
+
+	<!-- ID to EnergyTier -->
+	<!-- HU SU - 蒸汽锅炉,SU KU - 蒸汽引擎,EU KU - 电动引擎,SU RU - 单方块涡轮,EU HU - 电力加热器, -->
+	<!-- EU RU - 电力旋转动能引擎,EU MU - 电磁铁,EU EU - 变压器,EU EU - 电池盒,EU LU - CO2激光器, -->
+	<!-- RU EU - 发电机,LU QU - 量子充能器, LU LU - 晶体充能器,LU EU - 激光接收器,EU CU HU - 半导体制冷器, -->
+	<init>
+		function ID2Tier(mID,mInput,mOutput,isInput){
+			var tInput = 0;
+			var tOutput = 0;
+
+			if(mInput == "HU"){
+				if(mOutput == "SU"){
+					if(mID >= 17200){
+						switch(mID){
+							case 17201:{tInput = 4096;break;}
+							case 17202:{tInput = 8192;break;}
+							case 17203:{tInput = 16384;break;}
+							case 17204:{tInput = 131072;break;}
+							case 17205:{tInput = 4096;break;}
+						}
+					}
+					else if(mID >= 1250){
+						tInput = 4 * ID2Tier(mID - 50,"HU","SU",1);
+					}
+					else if(mID >= 1200){
+						switch(mID){
+							case 1200:{tInput = 16;break;}
+							case 1201:{tInput = 20;break;}
+							case 1202:{tInput = 24;break;}
+							case 1203:{tInput = 16;break;}
+							case 1204:{tInput = 32;break;}
+							case 1205:{tInput = 96;break;}
+							case 1206:{tInput = 112;break;}
+							case 1207:{tInput = 128;break;}
+							case 1208:{tInput = 128;break;}
+						}
+					}
+					
+					tOutput = tInput * 2;
+				}
+			}
+			if(mInput == "SU"){
+				if(mOutput == "KU"){
+					if(mID > 1311){
+						tOutput = 4 * ID2Tier(mID - 50,"SU","KU",0);
+					}
+					else if(mID >= 1300){
+						switch(mID){
+							case 1300:{tOutput = 8;break;}
+							case 1301:{tOutput = 10;break;}
+							case 1302:{tOutput = 12;break;}
+							case 1303:{tOutput = 8;break;}
+							case 1304:{tOutput = 16;break;}
+							case 1305:{tOutput = 48;break;}
+							case 1306:{tOutput = 56;break;}
+							case 1307:{tOutput = 64;break;}
+							case 1308:{tOutput = 64;break;}
+							case 1309:{tOutput = 12;break;}
+							case 1310:{tOutput = 8;break;}
+							case 1311:{tOutput = 32;break;}
+						}
+					}
+
+					tInput = parseInt(tOutput * 2 * 10000 / SteamEff(mID));
+				}
+				if(mOutput == "RU"){
+					switch(mID){
+						case 1512:{tOutput = 16;break;}
+						case 1515:{tOutput = 24;break;}
+						case 1518:{tOutput = 32;break;}
+						case 1522:{tOutput = 64;break;}
+						case 1525:{tOutput = 96;break;}
+						case 1527:{tOutput = 128;break;}
+						case 1528:{tOutput = 128;break;}
+						case 1529:{tOutput = 128;break;}
+						case 1530:{tOutput = 256;break;}
+						case 1531:{tOutput = 256;break;}
+						case 1535:{tOutput = 384;break;}
+						case 1538:{tOutput = 512;break;}
+						case 1540:{tOutput = 768;break;}
+						case 1545:{tOutput = 1024;break;}
+						case 1548:{tOutput = 2048;break;}
+						case 17211:{tOutput = 4096;break;}
+						case 17212:{tOutput = 8192;break;}
+						case 17213:{tOutput = 16384;break;}
+						case 17214:{tOutput = 131072;break;}
+					}
+
+					tInput = tOutput * 3;
+				}
+			}
+			if(mInput == "EU"){
+				if(mOutput == "KU"){
+					tInput = 8 * Math.pow(4,(mID % 10010));
+					tOutput = tInput / 2;
+				}
+				if(mOutput == "HU"){
+					if(mID >= 10160){
+						tInput = 8 * Math.pow(4,(mID % 10160));
+						tOutput = tInput / 4;
+					}
+					else if(mID >= 10000){
+						tInput = 8 * Math.pow(4,(mID % 10000));
+						tOutput = tInput / 2;
+					}	
+				}
+				if(mOutput == "RU"){
+					tInput = 8 * Math.pow(4,(mID % 10020));
+					tOutput = tInput / 2;
+				}
+				if(mOutput == "MU"){
+					tInput = 8 * Math.pow(4,(mID % 10030));
+					tOutput = tInput / 2;
+				}
+				if(mOutput == "EU"){
+					if(mID >= 10090){
+						tInput = 8 * Math.pow(4,(mID % 10090));
+						tOutput = tInput;
+					}
+					else if(mID >= 10080){
+						tInput = 8 * Math.pow(4,(mID % 10080));
+						tOutput = tInput;
+					}
+					else if(mID >= 10040){
+						tOutput = 8 * Math.pow(4,(mID % 10040));
+						tInput = tOutput * 4;
+					}
+				}
+				if(mOutput == "LU"){
+					tInput = 8 * Math.pow(4,(mID % 10100));
+					tOutput = tInput / 2;
+				}
+				if(mOutput == "CU"){
+					if(mID >= 10160){
+						tInput = 8 * Math.pow(4,(mID % 10160));
+						tOutput = tInput / 4;
+					}
+				}
+			}
+			if(mInput == "RU"){
+				if(mOutput == "EU"){
+					if(mID > 17220){
+						switch(mID){
+							case 17221:{tInput = 4096;break;}
+							case 17222:{tInput = 8192;break;}
+							case 17223:{tInput = 16384;break;}
+							case 17224:{tInput = 131072;break;}
+						}
+						tOutput = tInput * 3 / 4
+					}
+					else{
+					tInput = 8 * Math.pow(4,(mID % 10110));
+					tOutput = parseInt(tInput * 6875 / 10000);
+					}
+				}
+			}
+			if(mInput == "RF"){
+				if(mOutput == "HU"){
+					tInput = 32 * Math.pow(4,(mID % 11000));
+					tOutput = tInput / 4 / 2;
+				}
+				if(mOutput == "KU"){
+					tInput = 32 * Math.pow(4,(mID % 11010));
+					tOutput = tInput / 4 / 2;
+				}
+				if(mOutput == "RU"){
+					tInput = 32 * Math.pow(4,(mID % 11020));
+					tOutput = tInput / 4 / 2;
+				}
+				if(mOutput == "MU"){
+					tInput = 32 * Math.pow(4,(mID % 11030));
+					tOutput = tInput / 4 / 2;
+				}
+				if(mOutput == "LU"){
+					tInput = 32 * Math.pow(4,(mID % 11100));
+					tOutput = tInput / 4 / 2;
+				}
+				if(mOutput == "CU"){
+					tInput = 32 * Math.pow(4,(mID % 11160));
+					tOutput = tInput / 4 / 4;
+				}
+			
+			}
+			if(mInput == "LU"){
+				if(mOutput == "QU"){
+					tInput = 8 * Math.pow(4,(mID % 10120));
+					tOutput = tInput / 2;
+				}
+				if(mOutput == "LU"){
+					if(mID >= 10140){
+						tInput = 8 * Math.pow(4,(mID % 10140));
+						tOutput = tInput;
+					}
+					else if(mID >= 10130){
+						tInput = 8 * Math.pow(4,(mID % 10130));
+						tOutput = tInput;
+					}
+				}
+				if(mOutput == "EU"){
+					tInput = 8 * Math.pow(4,(mID % 10150));
+					tOutput = tInput / 2;
+				}
+			}
+
+			if(isInput == 1){
+				return tInput;
+			}
+			else if(isInput == 0){
+				return tOutput;
+			}
+		}
+	</init>
+
+	<!-- 判断蒸汽机器爆炸半径 -->
+	<init>
+		function ExplodeRoundSU(cap){
+			if((Math.sqrt(cap) / 100) > 1){
+				return parseInt((Math.sqrt(cap) / 100));
+			}
+			return 1;
+		}
+	</init>
+	<init>
+		function isMachineWork(aNBT){
+		if(aNBT['gt.active'] != undefined){
+				return BLUE + "正在加工";
+			}
+			if(aNBT['gt.running'] != undefined){
+				if(nbt['gt.mte.id'] < 22000){
+					if(nbt['gt.mte.id'] == 17110){
+						return BLUE + "待机";
+					}
+					return BLUE + "待机 - 耗电";
+				}
+				return BLUE + "待机";
+			}
+			return RED + "停机";
+		}
+	</init>
+	
+	
+	<!-- gt砧耐久 -->
+	<init>
+	function anvilDurability(aNBT){
+		return parseInt(getDefaultNBT(aNBT['gt.mte.id'])['gt.durability'] / 10000);
+	}
+	</init>
+	
+	<!-- 判断靠近锅炉所受伤害数值 -->
+	<init>
+		function HeatDamageSU(enCap,SUCap,isChisel){
+			if(isChisel == 0){
+				if(parseInt((enCap + SUCap / 2) / 2000) < 10){
+					return parseInt((enCap + SUCap / 2) / 2000);
+				}
+				return 10;
+			}
+			return parseInt((enCap + SUCap / 2) / 2000)
+		}
+	</init>
+	<!-- 判断靠近坩埚所受伤害数值 -->
+	<init>
+		function HeatDamage(temp,cap){
+			var count = 0;
+			if(temp > 300){
+				if(temp > 350){
+					count = (temp - 300) / 50;
+					if(count > cap){count = cap;}
+					return parseInt(count);
+				}
+				return 1;
+			}
+		}
+	</init>
+	<!--流体燃烧室容量 -->
+	<init>
+		function BurningBox_Cap(id){
+			switch(id){
+			case 1402:{return 240;}
+			case 1403:{return 160;}
+			case 1404:{return 320;}
+			case 1405:{return 1120;}
+			case 1406:{return 960;}
+			case 1407:{return 1280;}
+			case 1408:{return 1280;}
+			case 1409:{return 2560;}
+			case 1410:{return 960;}
+			case 1411:{return 240;}
+			case 1412:{return 280;}
+			default:{
+				if(id > 1460){
+					return BurningBox_Cap(id - 200);
+				}
+				if(id > 1410){
+					return BurningBox_Cap(id - 50);
+				}
+			}
+			}
+		}
+	</init>
+	<!-- 蒸汽引擎效率 -->
+	<init>
+		function SteamEff(mID){
+			if(mID >= 1350){
+				return SteamEff(mID - 50);
+			}
+			switch(mID){
+				case 1300:{return 3000;}
+				case 1301:{return 4000;}
+				case 1302:{return 5000;}
+				case 1303:{return 6400;}
+				case 1304:{return 5000;}
+				case 1305:{return 6300;}
+				case 1306:{return 5800;}
+				case 1307:{return 5800;}
+				case 1308:{return 6000;}
+				case 1309:{return 5000;}
+				case 1310:{return 6450;}
+				case 1311:{return 6200;}
+			}
+		}
+	</init>
+
+	<!-- 蒸汽锅炉容量 -->
+	<init>
+		function SteamCap(SC){
+			return ID2Tier(SC['gt.mte.id'],"HU","SU",1) * 10000;
+		}
+	</init>
+
+	<!-- 限定上下限 -->
+	<init>
+		function bind(aMin,aMax,aValue){
+			return Math.max(aMin,Math.min(aMax,aValue));
+		}
+	</init>
+
+	<!-- 电池盒参数 -->
+	<init>
+		function BatteryBoxArg(BBA,isLarge,ArgType,isEU){
+			var BatteryAmount = 0;
+			var EUAmount = 0;
+			var BatteryCap = 0;
+			var BatteryIDArg = 200;
+			var BatteryIDArg_2 = 14000;
+			var BatteryBoxArg_0 = 10080;
+			var BatteryBoxArg_1	= 10090;
+			var errorAmount = 0;
+
+			if(isEU != 1){
+				BatteryIDArg = 210;
+				BatteryIDArg_2 = 14500;
+				BatteryBoxArg_0 = 10130;
+				BatteryBoxArg_1 = 10140;
+			}
+
+			for (var i = 0; i < 16;i++) {
+				if(isLarge != 1){
+					if(i >= 4){
+						break;
+					}
+				}
+				if(BBA['gt.invlist'][i.toString()] != undefined){
+					try{
+						if((BBA['gt.invlist'][i.toString()]['Damage'] >= 20100) && (parseInt((BBA['gt.invlist'][i.toString()]['Damage'] / 100) % BatteryIDArg) == (BBA['gt.mte.id'] % BatteryBoxArg_0) || parseInt((BBA['gt.invlist'][i.toString()]['Damage'] / 100) % BatteryIDArg) == (BBA['gt.mte.id'] % BatteryBoxArg_1))){
+							if(BBA['gt.invlist'][i.toString()]['tag'] != undefined){
+								EUAmount += BBA['gt.invlist'][i.toString()]['tag']['gt.energy'];
+							}
+							BatteryAmount++;
+							if(isEU == 1){
+								BatteryCap += ID2Cap(BBA['gt.invlist'][i.toString()]['Damage'],"EU");
+								}else{
+									BatteryCap += ID2Cap(BBA['gt.invlist'][i.toString()]['Damage'],"LU");
+							}
+						}
+						else if((BBA['gt.invlist'][i.toString()]['Damage'] >= 14000) && (BBA['gt.invlist'][i.toString()]['Damage'] <= 14515) && (parseInt((BBA['gt.invlist'][i.toString()]['Damage'] % BatteryIDArg_2) % 10) == (BBA['gt.mte.id'] % BatteryBoxArg_0) || parseInt((BBA['gt.invlist'][i.toString()]['Damage'] % BatteryIDArg_2) % 10) == (BBA['gt.mte.id'] % BatteryBoxArg_1))){
+							if(BBA['gt.invlist'][i.toString()]['tag'] != undefined){
+								EUAmount += BBA['gt.invlist'][i.toString()]['tag']['gt.energy'];
+							}
+							BatteryAmount++;
+							if(isEU == 1){
+								BatteryCap += ID2Cap(BBA['gt.invlist'][i.toString()]['Damage'],"EU");
+							}else{
+								BatteryCap += ID2Cap(BBA['gt.invlist'][i.toString()]['Damage'],"LU");
+							}
+						}
+						else{
+							errorAmount++;
+						}
+					}
+					catch(e){
+						errorAmount++;
+					}
+				}
+			}
+
+			switch(ArgType){
+				case 0:{return BatteryAmount;}
+				case 1:{return EUAmount;}
+				case 2:{return BatteryCap;}
+				case 3:{return errorAmount;}
+			}
+		}
+	</init>
+
+	<!-- 电池容量 -->
+	<init>
+		function ID2Cap(mID,mInput){
+			if(mInput == "EU"){
+				if(mID >= 14100){
+					if(mID > 20300){
+						return 16 * ID2Cap(mID - 200,"EU");
+					}
+					if(mID > 20200){
+						return 4 * ID2Cap(mID - 100,"EU");
+					}
+					switch(mID){
+						case 20101:{return 32000;}
+						case 20102:{return 48000;}
+						case 20103:{return 64000;}
+						case 20104:{return 8000;}
+						case 20105:{return 16000;}
+						case 20106:{return 16000;}
+						case 20107:{return 16000;}
+					}
+				}
+				else{
+					if(mID >= 14020){
+						return 2 * ID2Cap(mID - 20,"EU");
+					}
+					if(mID >= 14010){
+						return 2 * ID2Cap(mID - 10,"EU");
+					}
+					switch(mID){
+						case 14000:{return 16000;}
+						case 14001:{return 64000;}
+						case 14002:{return 256000;}
+						case 14003:{return 1024000;}
+						case 14004:{return 4096000;}
+					}
+				}
+			}
+			if(mInput == "LU"){
+				if(mID >= 14510){
+					return 2 * ID2Cap(mID - 10,"LU");
+				}
+				return 3200000 * Math.pow(4,parseInt(mID % 14500));
+			}
+		}
+	</init>
+
+	<!-- 工作状态 -->
+	<init>
+		function isRun(iR){
+			if(iR['gt.active.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			if((iR['gt.active'] != undefined)||(iR['gt.can.energy'] != undefined)){
+				return BLUE + "待机";
+			}
+			return RED + "停机";
+		}
+	</init>
+	<!-- 多方块结构完整检查 -->
+	<init>
+		function checkComplete(aNBT){
+			if(aNBT['gt.state.str'] == undefined){
+				return RED + "多方块结构不完整，请仔细检查";
+			}
+		}
+	</init>
+	<!-- -->
+	<init>
+		function getSlotItem(aNBT,aSlot,aMaxSlot){
+			var index = 0;
+			while(index < aMaxSlot){
+				if(aNBT['gt.invlist'][index.toString()]['s'] == aSlot){
+					return aNBT['gt.invlist'][index.toString()]['Count'] + Unit("个 ") + name(aNBT['gt.invlist'][index.toString()]);
+				}
+				index++;
+			}
+		}
+		
+		function getSlotItem(aNBT,aSlot){
+			return getSlotItem(aNBT,aSlot,aSlot + 1);
+		}
+	</init>
+	
+
+	<init>
+		function overload_attention(aNBT){
+		    var str = "机器超载无法正常工作，请降低输入功率";
+			if(ID2EnergyType(aNBT['gt.mte.id'] == "EU")){
+				str += ",否则将导致机器爆炸!"
+			}
+			return RED + str;
+		}
+	</init>
+	<!-- 能量单位 -->
+	<init>
+		function Unit(Type){
+			switch(Type){
+				case "EU":{return BLUE + " EU" + WHITE;}
+				case "RU":{return GREEN + " RU" + WHITE;}
+				case "KU":{return DGREEN + " KU" + WHITE;}
+				case "HU":{return RED + " HU" + WHITE;}
+				case "CU":{return AQUA + " CU" + WHITE;}
+				case "LU":{return YELLOW + " LU" + WHITE;}
+				case "MU":{return DGRAY + " MU" + WHITE;}
+				case "NU":{return BLACK + " NU" + WHITE;}
+				case "QU":{return DPURPLE + " QU" + WHITE;}
+				case "TU":{return DBLUE + " TU" + WHITE;}
+				case "RF":{return DRED + " RF" + WHITE;}
+				case "MJ":{return DRED + " MJ" + WHITE;}
+				case "SU":{return GRAY + " SU" + WHITE;}
+				case "AU":{return WHITE + " AU" + WHITE;}
+				case "ORDO":{return WHITE + " Ordo" + WHITE;}
+				case "AER":{return YELLOW + " Aer" + WHITE;}
+				case "AQUA":{return AQUA + " Aqua" + WHITE;}
+				case "TERRA":{return GREEN + " Terra" + WHITE;}
+				case "IGNIS":{return RED + " Ignis" + WHITE;}
+				case "PERDITIO":{return BLACK + " Perditio" + WHITE;}
+				case "L":{return AQUA + " L" + WHITE;}
+				case "A":{return AQUA + " A" + WHITE;}
+				case "Angle":{return DAQUA + " °" + WHITE;}
+				case "个 ":{return AQUA + " 个 " + WHITE;}
+				case "份 ":{return AQUA + " 份 " + WHITE;}
+				case "K":{return AQUA + " K" + WHITE;}
+				case "种":{return AQUA + " 种" + WHITE;}
+				case "S":{return AQUA + " S" + WHITE;}
+				case "个":{return AQUA + " 个" + WHITE;}
+				case "次":{return AQUA + " 次" + WHITE;}
+			}
+		}
+	</init>
+
+	<!-- 储罐容量 -->
+	<init>
+		function LiquidCap(LC){
+			switch(LC['gt.mte.id']){
+				case 32733:{return 8000;}
+				case 32752:{return 8000;}
+				case 32753:{return 8000;}
+				case 32754:{return 8000;}
+				case 32714:{return 16000;}
+				case 32734:{return 32000;}
+				case 32715:{return 32000;}
+				case 32102:{return 64000;}
+				case 32064:{return 64000;}
+				case 32716:{return 64000;}
+				case 32070:{return 64000;}
+				case 32020:{return 64000;}
+				case 32093:{return 64000;}
+				case 32022:{return 64000;}
+				case 32087:{return 128000;}
+				case 32742:{return 128000;}
+				case 32717:{return 256000;}
+				case 32718:{return 256000;}
+				case 32083:{return 512000;}
+				case 32719:{return 4096000;}
+				case 32021:{return 4096000;}
+				case 17001:{return 432000;}
+				case 17002:{return 1728000;}
+				case 17006:{return 3456000;}
+				case 17003:{return 6912000;}
+				case 17004:{return 6912000;}
+				case 17005:{return 110592000;}
+				case 17022:{return 6912000;}
+				case 17026:{return 13824000;}
+				case 17023:{return 27648000;}
+				case 17024:{return 27648000;}
+				case 17025:{return 442368000;}
+			}
+		}
+	</init>
+
+	  <init>
+        function Mold2Recipes(mold){
+			var Prefix = getWorld().func_147438_o(mold['x'],mold['y'],mold['z']).getMoldRecipe(nbt['gt.mold']).toString();
+            switch(Prefix){
+                case "bolt":{return "螺栓";}
+                case "casingSmall":{return "外壳";}
+                case "chunkGt":{return "小块";}
+                case "gearGt":{return "齿轮";}
+                case "gearGtSmall": {return "小型齿轮";}
+                case "ingot":{return "锭";}
+                case "nugget":{return "粒";}
+                case "plate":{return "板";}
+                case "plateGem":{return "板";}
+                case "plateGemTiny":{return "小块板";}
+                case "plateTiny":{return "小块板";}
+                case "ring":{return "环";}
+                case "stick":{return "杆/棍";}
+                case "stickLong":{return "长杆/长棍";}
+                case "toolHeadRawArrow":{return "箭头毛坯";}
+                case "toolHeadRawAxe":{return "斧头毛坯";}
+                case "toolHeadRawAxeDouble":{return "双刃斧头毛坯";}
+                case "toolHeadRawChisel":{return "凿子头毛坯";}
+                case "toolHeadRawHoe":{return "锄头毛坯";}
+                case "toolHeadRawPickaxe":{return "镐头毛坯";}
+                case "toolHeadRawPlow":{return "犁头毛坯";}
+                case "toolHeadRawSaw":{return "锯片毛坯";}
+                case "toolHeadRawSense":{return "镰刀片毛坯";}
+                case "toolHeadRawShovel":{return "锹头毛坯";}
+                case "toolHeadRawSpade":{return "铲头毛坯";}
+                case "toolHeadRawSword":{return "剑身毛坯";}
+                case "toolHeadRawUniversalSpade":{return "万用铲头毛坯";}
+                case "toolHeadScrewdriver":{return "螺丝刀头";}
+				case "toolHeadFile":{return "锉刀头";}
+            }
+            return null;
+        }
+    </init>
+
+	<init>
+        function ID2Name(mID,Type){
+            switch(Type){
+                case "crate.dust":{return translate("oredict.crateGtDust" + getInternalODName(mID) + ".name");}
+                case "crate.gem":{return translate("oredict.crateGtGem" + getInternalODName(mID) + ".name");}
+                case "crate.ingot":{return translate("oredict.crateGtIngot" + getInternalODName(mID) + ".name");}
+                case "crate.plate":{return translate("oredict.crateGtPlate" + getInternalODName(mID) + ".name");}
+                case "crate.plateGem":{return translate("oredict.crateGtPlateGem" + getInternalODName(mID) + ".name");}
+                case "machine":{return translate("oredict.casingMachine" + getInternalODName(mID) + ".name");}
+                case "machine.dense":{return translate("oredict.casingMachineDense" + getInternalODName(mID) + ".name");}
+                case "machine.double":{return translate("oredict.casingMachineDouble" + getInternalODName(mID) + ".name");}
+                case "machine.quadruple":{return translate("oredict.casingMachineQuadruple" + getInternalODName(mID) + ".name");}
+                case "storage.dust":{return translate("oredict.blockDust" + getInternalODName(mID) + ".name");}
+                case "storage.gem":{return translate("oredict.blockGem" + getInternalODName(mID) + ".name");}
+                case "storage.ingot":{return translate("oredict.blockIngot" + getInternalODName(mID) + ".name");}
+                case "storage.plate":{return translate("oredict.blockPlate" + getInternalODName(mID) + ".name");}
+                case "storage.plateGem":{return translate("oredict.blockPlateGem" + getInternalODName(mID) + ".name");}
+                case "storage.solid":{return translate("oredict.blockSolid" + getInternalODName(mID) + ".name");}
+                case "storage.plateGem":{return translate("oredict.blockPlateGem" + getInternalODName(mID) + ".name");}
+				default:{return translate("oredict."+Type+getInternalODName(mID)+".name");}
+			}
+        }
+    </init>
+
+	<!-- 加工机器能量单位 -->
+	<init>
+		function ID2EnergyType(mID){
+			if(mID > 20000 && mID < 21000){
+				switch(parseInt(mID / 10) % 2000){
+					case 0:{return "HU";}
+					case 1:{return "RU";}
+					case 2:{return "KU";}
+					case 4:{return "RU";}
+					case 5:{return "KU";}
+					case 6:{return "RU";}
+					case 7:{return "KU";}
+					case 8:{return "RU";}
+					case 9:{return "EU";}
+					case 10:{return "KU";}
+					case 11:{return "RU";}
+					case 12:{return "RU";}
+					case 13:{return "RU";}
+					case 14:{return "RU";}
+					case 15:{return "RU";}
+					case 16:{return "EU";}
+					case 17:{return "HU";}
+					case 18:{return "RU";}
+					case 19:{return "HU";}
+					case 20:{return "HU";}
+					case 21:{return "RU";}
+					case 22:{return "MU";}
+					case 23:{return "KU";}
+					case 24:{return "HU";}
+					case 25:{return "HU";}
+					case 26:{return "EU";}
+					case 27:{return "EU";}
+					case 28:{return "EU";}
+					case 29:{return "RU";}
+					case 30:{return "MU";}
+					case 31:{return "HU";}
+					case 32:{return "LU";}
+					case 33:{return "LU";}
+					case 34:{return "EU";}
+					case 35:{return "EU";}
+					case 36:{return "EU";}
+					case 37:{return "EU";}
+					case 38:{return "EU";}
+					case 39:{return "HU";}
+					case 41:{return "QU";}
+					case 42:{return "QU";}
+					case 43:{return "QU";}
+					case 51:{return "RU";}
+					case 52:{return "RU";}
+					case 53:{return "EU";}
+					case 54:{return "EU";}
+					case 55:{return "RU";}
+					case 56:{return "CU";}
+					case 57:{return "CU";}
+					case 58:{return "EU";}
+					case 59:{return "EU";}
+				}
+			}
+			switch(mID){
+				case 22000:{return "TU";}
+				case 22001:{return "TU";}
+				case 22002:{return "TU";}
+				case 22003:{return "HU";}
+				case 22004:{return "TU";}
+			}
+		}
+	</init>
+
+	<!-- 加工机器物品存储 -->
+	<init>
+		function IOInv(nbt,solt,IO){
+			var inAmount;
+			var outAmount;
+			var blueprint = 0;
+			var mID = nbt['gt.mte.id'];
+			if(mID > 20000 && mID < 21000){
+				switch(parseInt(mID / 10) % 2000){
+					case 0:{inAmount = 1;outAmount = 1;break;}
+					case 1:{inAmount = 1;outAmount = 6;break;}
+					case 2:{inAmount = 1;outAmount = 4;break;}
+					case 4:{inAmount = 1;outAmount = 2;break;}
+					case 5:{inAmount = 1;outAmount = 12;break;}
+					case 6:{inAmount = 1;outAmount = 3;break;}
+					case 7:{inAmount = 1;outAmount = 1;break;}
+					case 8:{inAmount = 1;outAmount = 6;break;}
+					case 9:{inAmount = 2;outAmount = 6;break;}
+					case 10:{inAmount = 1;outAmount = 1;break;}
+					case 11:{inAmount = 1;outAmount = 1;break;}
+					case 12:{inAmount = 1;outAmount = 1;break;}
+					case 13:{inAmount = 1;outAmount = 1;break;}
+					case 14:{inAmount = 1;outAmount = 1;break;}
+					case 15:{inAmount = 1;outAmount = 1;break;}
+					case 16:{inAmount = 2;outAmount = 2;break;}
+					case 17:{inAmount = 1;outAmount = 3;break;}
+					case 18:{inAmount = 6;outAmount = 1;break;}
+					case 19:{inAmount = 1;outAmount = 2;break;}
+					case 20:{inAmount = 2;outAmount = 1;break;}
+					case 21:{inAmount = 6;outAmount = 1;break;}
+					case 22:{inAmount = 1;outAmount = 1;break;}
+					case 23:{inAmount = 3;outAmount = 1;break;}
+					case 24:{inAmount = 1;outAmount = 1;break;}
+					case 25:{inAmount = 1;outAmount = 1;break;}
+					case 26:{inAmount = 2;outAmount = 1;break;}
+					case 27:{inAmount = 2;outAmount = 1;break;}
+					case 28:{inAmount = 2;outAmount = 2;break;}
+					case 29:{inAmount = 1;outAmount = 9;break;}
+					case 30:{inAmount = 1;outAmount = 6;break;}
+					case 31:{inAmount = 1;outAmount = 1;break;}
+					case 32:{inAmount = 2;outAmount = 1;break;}
+					case 33:{inAmount = 6;outAmount = 1;break;}
+					case 34:{inAmount = 9;outAmount = 12;blueprint = 1;break;}
+					case 35:{inAmount = 6;outAmount = 1;break;}
+					case 36:{inAmount = 6;outAmount = 1;break;}
+					case 37:{inAmount = 1;outAmount = 12;break;}
+					case 38:{inAmount = 2;outAmount = 2;break;}
+					case 39:{inAmount = 2;outAmount = 1;break;}
+					case 41:{inAmount = 1;outAmount = 1;break;}
+					case 42:{inAmount = 2;outAmount = 1;break;}
+					case 43:{inAmount = 3;outAmount = 3;break;}
+					case 51:{inAmount = 1;outAmount = 2;break;}
+					case 52:{inAmount = 6;outAmount = 1;break;}
+					case 53:{inAmount = 2;outAmount = 1;break;}
+					case 54:{inAmount = 2;outAmount = 1;break;}
+					case 55:{inAmount = 1;outAmount = 2;break;}
+					case 56:{inAmount = 1;outAmount = 1;break;}
+					case 57:{inAmount = 6;outAmount = 1;break;}
+					case 58:{inAmount = 2;outAmount = 1;break;}
+					case 59:{inAmount = 1;outAmount = 2;break;}
+				}
+			}
+			switch(mID){
+				case 22000:{inAmount = 0;outAmount = 1;break;}
+				case 22001:{inAmount = 1;outAmount = 1;break;}
+				case 22002:{inAmount = 6;outAmount = 6;break;}
+				case 22003:{inAmount = 1;outAmount = 1;break;}
+				case 22004:{inAmount = 2;outAmount = 3;break;}
+			}
+
+			var i = 0;
+
+			if(IO == 'I'){
+				if((solt + 1) > inAmount){
+				}
+				for(i = 0;i < inAmount;i++){
+					if(nbt['gt.invlist'][i.toString()]['s'] == solt){
+						return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
+					}
+				}
+			}
+			else if(IO == 'O'){
+				if((solt + 1) > outAmount){
+				}
+				else{
+					for(i = 0;i < (inAmount + outAmount);i++){
+						if(nbt['gt.invlist'][i.toString()]['s'] == (solt + inAmount)){
+							return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
+						}
+					}
+				}
+			}
+			else if(IO == 'B'){
+				if(blueprint == 1){
+					for(i = 0;i < (inAmount + outAmount);i++){
+						if(nbt['gt.invlist'][i.toString()]['s'] == 21){
+							return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
+						}
+					}
+					return RED + "请放置蓝图";
+				}
+			}
+		}
+	</init>
+	
+	
+	<!--Anvil-->
+	<tileentity id = "gt.multitileentity.anvil.simple">
+	
+	<line displayname = "提示">
+		try{
+			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
+			switch(nbt['gt.facing']){
+				case 0:
+				case 1:
+					{
+						return "Invalid Anvil Facing!";
+					}
+				case 2:
+				case 3:
+					{
+						if(side >= 4){
+							var isBig = (side - nbt['gt.facing']) % 2;
+							if(isBig == 1) return "此端是大端";
+							else return "此端是小端";
+						}
+						return undefined;
+					}
+				case 4:
+				case 5:
+					{
+						if(side < 4 && side > 1){
+							var isBig = (nbt['gt.facing'] - side) % 2;
+							if(isBig == 1) return "此端是大端";
+							else return "此端是小端";
+						}
+					}
+				return undefined;
+			}
+		}catch(e){
+			return e.message;
+		}
+	</line>
+	<line displayname = "剩余耐久">
+		var t = parseInt(nbt['gt.durability']) / 10000;
+		if(t < anvilDurability(nbt) / 5){
+			return RED + t + Unit("次");
+		}
+		else if(t < anvilDurability(nbt) / 2){
+			return YELLOW + t + Unit("次");
+		}
+		return WHITE + t + Unit("次");
+	</line>
+	<line displayname = "输入物品1">
+		return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+	</line>
+		<line displayname = "输入物品2">
+		return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
+	</line>
+	</tileentity>
+	
+    <!-- 坩埚 -->
+    <tileentity id = "gt.multitileentity.smeltery">
+		<!-- TODO: 烫伤警告/爆炸警告 -->
+		<line displayname = "警告">
+		if(nbt['gt.temperature'] > 1300){
+			return RED + "此时破坏坩埚将会导致坩埚熔毁!"
+		}
+		</line>
+		<line displayname = "烫伤警告">
+
+				if(nbt['gt.temperature'] > 320){
+					return RED + "此时接触坩埚将会受到" + HeatDamage(nbt['gt.temperature'],10) + "点伤害" 
+				}
+
+		</line>
+	    <line displayname = "当前温度">
+		var temp = nbt['gt.temperature'];
+		var s1 = temp + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+        var s2 = ">" + tempLimit + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+		switch(showTemprature){
+			case "Always": return s1;
+			case "Never": return null;
+			case "Thermometer":{
+				if(getPlayer().func_70694_bm() == null) return null;
+				var meta = getPlayer().func_70694_bm().func_77960_j();
+				var hold = holding().toString();
+				if(meta != 10000 || hold != "gregtech:gt.multiitem.randomtools") return null;
+				return s1;
+			}
+			case "TempLimit": if(temp <= tempLimit) return s1; else return s2;
+		}
+        </line>
+		
+		<line displayname = "熔炼物种数">
+			return nbt['gt.materials']['size'] + Unit("种");
+        </line>
+		<line displayname = "熔炼物1-4情况">
+			
+				if(nbt['gt.materials']['0'] != undefined){
+					var str = '';
+					var i = 0;
+	
+					while(i < 4){
+						if(nbt['gt.materials'][i.toString()] != undefined){
+							str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+							
+						}
+						if(((i + 1) < 4) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+							str += " | ";
+						}	
+						i++;
+					}
+					return str;
+				}
+			
+        </line>
+		
+		<line displayname = "熔炼物5-8情况">
+		
+			if(nbt['gt.materials']['4'] != undefined){
+				var str = '';
+				var i = 4;
+
+				while(i < 8){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 8) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+		
+		<line displayname = "熔炼物9-12情况">
+		
+			if(nbt['gt.materials']['8'] != undefined){
+				var str = '';
+				var i = 8;
+
+				while(i < 12){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 12) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+	
+		<line displayname = "熔炼物13-16情况">
+	
+			if(nbt['gt.materials']['12'] != undefined){
+				var str = '';
+				var i = 12;
+
+				while(i < 16){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 16) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+	
+		<line displayname = "熔炼物17-20情况">
+		
+			if(nbt['gt.materials']['16'] != undefined){
+				var str = '';
+				var i = 16;
+
+				while(i < 20){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 20) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+	</tileentity>
+	
+	<!-- 模具 -->
+	<tileentity id = "gt.multitileentity.mold">
+		<!-- TODO: 烫伤警告 -->
+
+	    <line displayname = "当前温度">
+			return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+        </line>
+
+		<line displayname = "铸造模具">
+			try{
+				if(nbt['gt.mold'] != undefined){
+					return Mold2Recipes(nbt);
+				}
+				return "无";
+			}
+			catch(e){return e.message;}
+		</line>
+		<line displayname = "连通方向">
+			var str = "";
+			if((nbt['gt.connection'] & 4) == 4){
+				str += "北";
+				if((nbt['gt.connection'] & 8) == 8 || (nbt['gt.connection'] & 16) == 16 || (nbt['gt.connection'] & 32) == 32){
+					str += " | ";
+				}
+			}
+			if((nbt['gt.connection'] & 8) == 8){
+				str += "南";
+				if((nbt['gt.connection'] & 16) == 16 || (nbt['gt.connection'] & 32) == 32){
+					str += " | ";
+				}
+			}
+			if((nbt['gt.connection'] & 16) == 16){
+				str += "西";
+				if((nbt['gt.connection'] & 32) == 32){
+					str += " | ";
+				}
+			}
+			if((nbt['gt.connection'] & 32) == 32){
+				str += "东";
+			}
+			if(str != ""){
+				return str;
+			}
+			return "无";
+		</line>
+
+		<line displayname = "自动输入">
+			if(nbt['gt.mode'] != undefined){
+				return BLUE + "当提供红石信号时，进行自动输入";
+			}
+			return BLUE + "当提供红石信号时，不能自动输入";
+		</line>
+
+		<line displayname = "铸造材料">
+			return getMaterialName(nbt['gt.materials']['i']);
+	    </line>
+
+		<line displayname = "输出产物">
+			return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+		</line>
+
+	</tileentity>
+	
+	
+	
+	<!-- 坩埚浇铸口 -->
+	<tileentity id = "gt.multitileentity.smeltery.drain">
+		<line displayname = "自动输出">
+			if(nbt['gt.mode'] != undefined){
+				return BLUE + "当提供红石信号时，不能自动输出";
+			}
+			return BLUE + "当提供红石信号时，可以自动输出";
+		</line>
+
+	</tileentity>
+
+	<!-- 浇铸盆 -->
+	<tileentity id = "gt.multitileentity.basin">
+		<!-- TODO: 烫伤警告 -->
+
+	    <line displayname = "当前温度">
+			return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+        </line>
+
+		<line displayname = "连通方向">
+			var str = "";
+			if((nbt['gt.connection'] & 4) == 4){
+				str += "北";
+				if((nbt['gt.connection'] & 8) == 8 || (nbt['gt.connection'] & 16) == 16 || (nbt['gt.connection'] & 32) == 32){
+					str += " | ";
+				}
+			}
+			if((nbt['gt.connection'] & 8) == 8){
+				str += "南";
+				if((nbt['gt.connection'] & 16) == 16 || (nbt['gt.connection'] & 32) == 32){
+					str += " | ";
+				}
+			}
+			if((nbt['gt.connection'] & 16) == 16){
+				str += "西";
+				if((nbt['gt.connection'] & 32) == 32){
+					str += " | ";
+				}
+			}
+			if((nbt['gt.connection'] & 32) == 32){
+				str += "东";
+			}
+			if(str != ""){
+				return str;
+			}
+			return "无";
+		</line>
+
+		<line displayname = "自动输入">
+			if(nbt['gt.mode'] != undefined){
+				return BLUE + "当提供红石信号时，可以自动输入";
+			}
+			return BLUE + "当提供红石信号时，不能自动输入";
+		</line>
+
+		<line displayname = "铸造材料">
+			return getMaterialName(nbt['gt.materials']['i']);
+	    </line>
+
+		<line displayname = "输出产物">
+			return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+		</line>
+
+	</tileentity>
+
+	<!-- 蒸汽锅炉 -->
+	<tileentity id = "gt.multitileentity.tank.boiler_steam">
+		<line displayname = "爆炸警告1">
+			if((nbt['gt.tank.1']['Amount'] / (SteamCap(nbt))) > 0.10){
+				return RED + "此时使用扳手拆除会造成威力" + ExplodeRoundSU(nbt['gt.tank.1']['Amount']) + "点的爆炸";
+			}
+		</line>
+
+		<line displayname = "爆炸警告2">
+			if((nbt['gt.tank.1']['Amount'] / (SteamCap(nbt))) > 0.46){
+				return RED + "此时使用凿子清理锅炉会造成威力" + ExplodeRoundSU(nbt['gt.tank.1']['Amount']) + "点的爆炸";
+			}
+		</line>
+
+		<line displayname = "烫伤警告1">
+			
+				if((nbt['gt.energy'] != undefined) && (nbt['gt.tank.1']['Amount'] != undefined)){
+					if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
+						return RED + "此时靠近锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],0) + "点伤害";
+					}
+				}
+				if(nbt['gt.energy'] != undefined){
+					if(nbt['gt.tank.1']['Amount'] != undefined){
+						if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
+							return RED + "此时靠近锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],0) + "点伤害";
+						}
+					}
+					if((nbt['gt.energy']) > 2000){
+						return RED + "此时靠近锅炉会受到" + HeatDamageSU(nbt['gt.energy'],0,0) + "点伤害";
+					}
+				}
+				if(nbt['gt.tank.1']['Amount'] != undefined){
+					if((nbt['gt.tank.1']['Amount'] / 2) > 2000){
+						return RED + "此时靠近锅炉会受到" + HeatDamageSU(0,nbt['gt.tank.1']['Amount'],0) + "点伤害";
+					}
+				}
+			
+		</line>
+
+		<line displayname = "烫伤警告2">
+		
+				if((nbt['gt.energy'] != undefined) && (nbt['gt.tank.1']['Amount'] != undefined)){
+					if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
+						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],1) + "点伤害";
+					}
+				}
+
+				if(nbt['gt.energy'] != undefined){
+					if(nbt['gt.tank.1']['Amount'] != undefined){
+						if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
+							return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],1) + "点伤害";
+						}
+					}
+					if((nbt['gt.energy']) > 2000){
+						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],0,1) + "点伤害";
+					}
+				}
+				if(nbt['gt.tank.1']['Amount'] != undefined){
+					if((nbt['gt.tank.1']['Amount'] / 2) > 2000){
+						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(0,nbt['gt.tank.1']['Amount'],1) + "点伤害";
+					}
+				}
+			
+		</line>
+
+		<line displayname = "工作状态">
+			if(nbt['gt.tank.1']['Amount'] * 2 >= (SteamCap(nbt))){
+				return GREEN + "运行";
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				return BLUE + "预热";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GOLD + "干烧";
+			}
+			return RED + "停机";
+		</line>
+
+		<line displayname = "效率">
+			if(nbt['gt.eff'] != undefined){
+				return nbt['gt.eff'] / 100 + "%";
+			}
+			return "100.00%";
+		</line>
+
+		<line displayname = "热量储量">
+			if(nbt['gt.energy'] != undefined){
+				return nbt['gt.energy'] + "/" + SteamCap(nbt) + Unit("HU") + " - " + parseInt(nbt['gt.energy'] / SteamCap(nbt) * 10000) / 100 + "%";
+			}
+			return "0/" + SteamCap(nbt) + Unit("HU") + " - " + "0.00%";
+		</line>
+
+	    <line displayname = "水类型">
+			return fluidName(nbt['gt.tank.0']['FluidName']);
+		</line>
+
+		<line displayname = "水储量">
+			if(nbt['gt.tank.0'] != undefined){
+				return nbt['gt.tank.0']['Amount'] + "/4000" + Unit("L");
+			}
+			return "0/4000" + Unit("L");
+		</line>
+
+		<line displayname = "蒸汽储量">
+			if(nbt['gt.tank.1'] != undefined){
+				return nbt['gt.tank.1']['Amount'] + "/" + SteamCap(nbt) + Unit("L") + " - " + parseInt(nbt['gt.tank.1']['Amount'] / SteamCap(nbt) * 10000) / 100 + "%";
+			}
+			return "0/" + SteamCap(nbt) + Unit("L") + " - " + "0.00%";
+		</line>
+		
+	</tileentity>
+	
+	<!-- 蒸汽引擎 -->
+	<tileentity id = "gt.multitileentity.engine.kinetic_steam">
+		<line displayname = "过热警告">
+			return RED + "若热量储量达到100%，则会强制停机";
+		</line>
+
+		<line displayname = "工作状态">
+			if(nbt['gt.stopped'] == 1){
+				return RED + "停机";
+			}
+			if(nbt['gt.active'] == 1){
+				return GREEN + "运行";
+			}
+			return BLUE + "预热";
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.active'] == 1){
+				return ID2Tier(nbt['gt.mte.id'],"SU","KU",0) * ((nbt['gt.visual'] + 1) / 16) + Unit("KU") + "/t";
+			}
+			return "机器未运行 - 0" + Unit("KU") + "/t";
+		</line>
+
+	    <line displayname = "动能储量">
+			if(nbt['gt.energy'] != undefined){
+				return nbt['gt.energy'] + "/" + bind(2000,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","KU",0) * 2000) + Unit("KU") + " - " + parseInt(nbt['gt.energy'] / bind(2000,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","KU",0) * 2000) * 10000) / 100 + "%";
+			}
+			return "0/" + bind(2000,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","KU",0) * 2000) + Unit("KU") + " - " + "0.00%";
+		</line>
+
+		<line displayname = "蒸汽储量">
+			if(nbt['gt.tank.0'] != undefined){
+				return nbt['gt.tank.0']['Amount'] + "/" + bind(200,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","KU",0) * 200) + Unit("L");
+			}
+			return "0/" + bind(200,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","KU",0) * 200) + Unit("L");
+		</line>
+
+	</tileentity>
+	
+	<!-- 电力引擎 -->
+	<tileentity id = "gt.multitileentity.engine.kinetic_electricity">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			if(nbt['gt.mode'] == undefined){
+				return ID2Tier(nbt['gt.mte.id'],"EU","KU",1) + Unit("EU") + "/t" + " - " +  "1" + Unit("A");
+			}
+			if(nbt['gt.mode'] < 7){
+				return ID2Tier(nbt['gt.mte.id'],"EU","KU",1) / 2 + Unit("EU") + "/t" + " - " + ((1 + nbt['gt.mode']) / 8) + Unit("A");
+			}
+			return ID2Tier(nbt['gt.mte.id'],"EU","KU",1) * (nbt['gt.mode'] + 1) / 16 + Unit("EU") + "/t" + " - " + "1" + Unit("A");
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.mode'] == undefined){
+				return ID2Tier(nbt['gt.mte.id'],"EU","KU",0) + Unit("KU") + "/t";
+			}
+			return ID2Tier(nbt['gt.mte.id'],"EU","KU",0) * (nbt['gt.mode'] + 1) / 16 + Unit("KU") + "/t";
+		</line>
+
+	</tileentity>
+
+	<!-- 单方块涡轮 -->
+	<tileentity id = "gt.multitileentity.turbines.rotation_steam">
+		<line displayname = "旋转警告">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				return RED + "此时玩家/动物/实体/...站在RU输出面时，会被机器转动";
+			}
+		</line>
+
+		<line displayname = "工作状态">
+			if(nbt['gt.output.su'] != undefined){
+				if((nbt['gt.output.su'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return BLUE + "超载";
+				}
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				if((nbt['gt.tank.0']['Amount'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return BLUE + "超载";
+				}
+			}	
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.output.su'] != undefined){
+				if((nbt['gt.output.su'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return RED + "机器超载无法正常工作，请降低输入功率"
+				}
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				if((nbt['gt.tank.0']['Amount'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return RED + "机器超载无法正常工作，请降低输入功率"
+				}
+			}
+			if(nbt['gt.output.su'] != undefined){
+				return parseInt(nbt['gt.output.su'] / 3) + Unit("RU") + "/t";
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				return parseInt(nbt['gt.tank.0']['Amount'] / 3) + Unit("RU") + "/t";
+			}
+			return "0" + Unit("RU") + "/t";
+		</line>
+
+		<line displayname = "蒸汽储量">
+			if(nbt['gt.tank.0'] != undefined){
+				return nbt['gt.tank.0']['Amount'] + "/" + bind(1,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","RU",1) * 2 * 4) + Unit("L");
+			}
+			return "0/" + bind(1,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","RU",1) * 2 * 4) + Unit("L");
+		</line>
+
+		<line displayname = "旋转方向">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				if(nbt['gt.reversed'] != undefined){
+					return BLUE + "顺时针";
+				}
+				return BLUE + "逆时针";
+			}
+		</line>
+
+		<line displayname = "旋转速度">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				if(nbt['gt.output.su'] != undefined){
+					if((nbt['gt.output.su'] / 3) > ID2Tier(nbt['gt.mte.id'],"SU","RU",0)){
+						return "10" + Unit("Angle") + "/t" + " - " + "1.8" + BLUE + " 秒" + WHITE + "/转";
+					}
+				}
+				if(nbt['gt.tank.0'] != undefined){
+					if((nbt['gt.tank.0']['Amount'] / 3) > ID2Tier(nbt['gt.mte.id'],"SU","RU",0)){
+						return "10" + Unit("Angle") + "/t" + " - " + "1.8" + BLUE + " 秒" + WHITE + "/转";
+					}
+				}	
+				return "5" + Unit("Angle") + "/t" + " - " + "3.6" + BLUE + " 秒" + WHITE + "/转";
+			}
+		</line>
+
+	</tileentity>
+
+	<!-- 电力加热器 -->
+	<tileentity id = "gt.multitileentity.heater.heat_electric">
+		<line displayname = "烫伤警告">
+			return RED + "此时靠近热量输出面，会受到" + Math.min(10,(ID2Tier(nbt['gt.mte.id'],"EU","HU",1) / 10)) + "伤害";
+		</line>
+
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","HU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","HU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","HU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","HU",0) + Unit("HU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","HU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","HU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 电力旋转动能引擎 -->
+	<tileentity id = "gt.multitileentity.motors.rotation_electric">
+		<line displayname = "旋转警告">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				return RED + "此时玩家/动物/实体/...站在RU输出面时，会被机器转动";
+			}
+		</line>
+
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","RU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","RU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","RU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","RU",0) + Unit("RU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","RU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","RU",0) * 2 + ")";
+		</line>
+
+		<line displayname = "旋转方向">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				if(nbt['gt.reversed'] != undefined){
+					return BLUE + "顺时针";
+				}
+				return BLUE + "逆时针";
+			}
+		</line>
+
+		<line displayname = "旋转速度">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				if(nbt['gt.visual'] == 1){
+					return "10" + Unit("Angle") + "/t" + " - " + "1.8" + BLUE + " 秒" + WHITE + "/转";
+				}
+				return "5" + Unit("Angle") + "/t" + " - " + "3.6" + BLUE + " 秒" + WHITE + "/转";
+			}
+		</line>
+
+	</tileentity>
+
+	<!-- 电磁铁 -->
+	<tileentity id = "gt.multitileentity.magnet.magnet_electric">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","MU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","MU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","MU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","MU",0) + Unit("MU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","MU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","MU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 变压器 -->
+	<tileentity id = "gt.multitileentity.transformers.transformer_electric">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			if(nbt['gt.reversed'] != undefined){
+				return ID2Tier(nbt['gt.mte.id'],"EU","EU",0) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","EU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","EU",0) * 2 + ")";
+			}
+			return ID2Tier(nbt['gt.mte.id'],"EU","EU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","EU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","EU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.reversed'] != undefined){
+				return ID2Tier(nbt['gt.mte.id'],"EU","EU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","EU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","EU",1) * 2 + ")";
+			}
+			return ID2Tier(nbt['gt.mte.id'],"EU","EU",0) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","EU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","EU",0) * 2 + ")";
+		</line>
+
+		<line displayname = "输送方向">
+			if(nbt['gt.reversed'] != undefined){
+				return BLUE + "大圆点" + RED + "输出" + BLUE + "高电压，小圆点" + RED + "输入" + BLUE + "低电压";
+			}
+			return BLUE + "大圆点" + RED + "输入" + BLUE + "高电压，小圆点" + RED + "输出" + BLUE + "低电压";
+		</line>
+
+	</tileentity>
+
+	<!-- 电池盒 -->
+	<tileentity id = "gt.multitileentity.energystorages.battery_electric">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.mode'] != undefined){
+				return ID2Tier(nbt['gt.mte.id'],"EU","EU",0) + Unit("EU") + "/t" + " - " + Math.min(nbt['gt.mode'],BatteryBoxArg(nbt,0,0,1)) + Unit("A");
+			}
+			return ID2Tier(nbt['gt.mte.id'],"EU","EU",0) + Unit("EU") + "/t" + " - " + BatteryBoxArg(nbt,0,0,1) + Unit("A");
+		</line>
+
+		<line displayname = "可用电池">
+			return BatteryBoxArg(nbt,0,0,1) + Unit("个");
+		</line>
+
+		<line displayname = "无用电池">
+			return BatteryBoxArg(nbt,0,3,1) + Unit("个");
+		</line>
+
+		<line displayname = "总存电量">
+			return BatteryBoxArg(nbt,0,1,1) + Unit("EU");
+		</line>
+
+		<line displayname = "存电上限">
+			return BatteryBoxArg(nbt,0,2,1) + Unit("EU");
+		</line>
+
+	</tileentity>
+
+	<!-- 大型电池盒 -->
+	<tileentity id = "gt.multitileentity.energystorages.battery_electric_large">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.mode'] != undefined){
+				return ID2Tier(nbt['gt.mte.id'],"EU","EU",0) + Unit("EU") + "/t" + " - " + Math.min(nbt['gt.mode'],BatteryBoxArg(nbt,1,0,1)) + Unit("A");
+			}
+			return ID2Tier(nbt['gt.mte.id'],"EU","EU",0) + Unit("EU") + "/t" + " - " + BatteryBoxArg(nbt,1,0,1) + Unit("A");
+		</line>
+
+		<line displayname = "可用电池">
+			return BatteryBoxArg(nbt,1,0,1) + Unit("个");
+		</line>
+
+		<line displayname = "无用电池">
+			return BatteryBoxArg(nbt,1,3,1) + Unit("个");
+		</line>
+
+		<line displayname = "总存电量">
+			return BatteryBoxArg(nbt,1,1,1) + Unit("EU");
+		</line>
+
+		<line displayname = "存电上限">
+			return BatteryBoxArg(nbt,1,2,1) + Unit("EU");
+		</line>
+
+	</tileentity>
+
+	<!-- 太阳能电池板 -->
+	<tileentity id = "gt.multitileentity.solarpanel.electric_8eu">
+		<line displayname = "遮盖警告">
+			if(nbt['gt.active'] == undefined){
+				return RED + "机器上方不能被非透明方块遮盖";
+			}
+		</line>
+
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+	
+		<line displayname = "电能储量">
+			if(nbt['gt.energy'] != undefined){
+				return nbt['gt.energy'] + Unit("EU"); 
+		</line>
+
+	</tileentity>
+
+	<!-- CO2激光器 -->
+	<tileentity id = "gt.multitileentity.laser.laser_electric">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","LU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","LU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","LU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","LU",0) + Unit("LU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","LU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","LU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 发电机 -->
+	<tileentity id = "gt.multitileentity.dynamo.electric_rotation">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"RU","EU",1) + Unit("RU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"RU","EU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"RU","EU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"RU","EU",0) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"RU","EU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"RU","EU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 量子充能器 -->
+	<tileentity  id = "gt.multitileentity.quantumenergizer.quantum_laser">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"LU","QU",1) + Unit("LU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"LU","QU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"LU","QU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"LU","QU",0) + Unit("QU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"LU","QU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"LU","QU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 晶体充能器 -->
+	<tileentity id = "gt.multitileentity.energystorages.crystal_laser">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.mode'] != undefined){
+				return ID2Tier(nbt['gt.mte.id'],"LU","LU",0) + Unit("LU") + "/t" + " - " + Math.min(nbt['gt.mode'],BatteryBoxArg(nbt,0,0,0)) + Unit("A");
+			}
+			return ID2Tier(nbt['gt.mte.id'],"LU","LU",0) + Unit("LU") + "/t" + " - " + BatteryBoxArg(nbt,0,0,0) + Unit("A");
+		</line>
+
+		<line displayname = "可用电池">
+			return BatteryBoxArg(nbt,0,0,0) + Unit("个");
+		</line>
+
+		<line displayname = "无用电池">
+			return BatteryBoxArg(nbt,0,3,0) + Unit("个");
+		</line>
+
+		<line displayname = "总存电量">
+			return BatteryBoxArg(nbt,0,1,0) + Unit("LU");
+		</line>
+
+		<line displayname = "存电上限">
+			return BatteryBoxArg(nbt,0,2,0) + Unit("LU");
+		</line>
+
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.generator.motor_liquid">
+	<line displayname = "工作状态">
+		if(nbt['gt.energy'] > 0){
+			return GREEN + "运行";
+		}
+		return RED + "停机";
+	</line>
+	<line displayname = "燃油储量">
+		return nbt['gt.tank.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.0']['FluidName']);
+	</line>
+	<line displayname = "尾气储量">
+		return nbt['gt.tank.1']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tank.1']['FluidName']);
+	</line>
+	</tileentity>
+	
+	<!-- 大型晶体充能器 -->
+	<tileentity id = "gt.multitileentity.energystorages.crystal_laser_large">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.mode'] != undefined){
+				return ID2Tier(nbt['gt.mte.id'],"LU","LU",0) + Unit("LU") + "/t" + " - " + Math.min(nbt['gt.mode'],BatteryBoxArg(nbt,1,0,0)) + Unit("A");
+			}
+			return ID2Tier(nbt['gt.mte.id'],"LU","LU",0) + Unit("LU") + "/t" + " - " + BatteryBoxArg(nbt,1,0,0) + Unit("A");
+		</line>
+
+		<line displayname = "可用电池">
+			return BatteryBoxArg(nbt,1,0,0) + Unit("个");
+		</line>
+
+		<line displayname = "无用电池">
+			return BatteryBoxArg(nbt,1,3,0) + Unit("个");
+		</line>
+
+		<line displayname = "总存电量">
+			return BatteryBoxArg(nbt,1,1,0) + Unit("LU");
+		</line>
+
+		<line displayname = "存电上限">
+			return BatteryBoxArg(nbt,1,2,0) + Unit("LU");
+		</line>
+
+	</tileentity>
+
+	<!-- 激光接收器 -->
+	<tileentity id = "gt.multitileentity.laserabsorbers.electric_laser">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"LU","EU",1) + Unit("LU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"LU","EU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"LU","EU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"LU","EU",0) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"LU","EU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"LU","EU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 半导体制冷器 -->
+	<tileentity id = "gt.multitileentity.cooler.cryo_electric">
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","CU",1) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","CU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","CU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","CU",0) + Unit("CU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","CU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","CU",0) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"EU","HU",0) + Unit("HU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"EU","HU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"EU","HU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<!-- 管道 -->
+	<tileentity id = "gt.multitileentity.connector.pipe.fluid">
+	    <line displayname = "内容物">
+		try{
+			if(nbt['gt.mlast.8'] != undefined) return null;
+			var ret = "";
+			if(nbt['gt.tank.0']!=undefined) ret += fluidName(nbt['gt.tank.0']['FluidName'])+": "+GREEN+nbt['gt.tank.0']['Amount'] + Unit("L");
+			if(nbt['gt.tank.1']!=undefined) ret += " | " + fluidName(nbt['gt.tank.1']['FluidName'])+": "+GREEN+nbt['gt.tank.1']['Amount'] + Unit("L");
+			if(ret != "") return ret;
+			else return null;
+		}
+		catch(e){
+			return e.message;
+		}		
+		</line>
+		<line displayname = "">
+		if(nbt['gt.mlast.8'] != undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.2']!=undefined) ret += fluidName(nbt['gt.tank.2']['FluidName'])+": "+GREEN+nbt['gt.tank.2']['Amount'] + Unit("L");
+		if(nbt['gt.tank.3']!=undefined) ret += " | " + fluidName(nbt['gt.tank.3']['FluidName'])+": "+GREEN+nbt['gt.tank.3']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+		
+		<line displayname = "内容物">
+		if(nbt['gt.mlast.8'] == undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.0']!=undefined) ret += fluidName(nbt['gt.tank.0']['FluidName'])+": "+GREEN+nbt['gt.tank.0']['Amount'] + Unit("L");
+		if(nbt['gt.tank.1']!=undefined) ret += " | " + fluidName(nbt['gt.tank.1']['FluidName'])+": "+GREEN+nbt['gt.tank.1']['Amount'] + Unit("L");
+		if(nbt['gt.tank.2']!=undefined) ret += " | " + fluidName(nbt['gt.tank.2']['FluidName'])+": "+GREEN+nbt['gt.tank.2']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+		<line displayname = "">
+		if(nbt['gt.mlast.8'] == undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.3']!=undefined) ret += fluidName(nbt['gt.tank.3']['FluidName'])+": "+GREEN+nbt['gt.tank.3']['Amount'] + Unit("L");
+		if(nbt['gt.tank.4']!=undefined) ret += " | " + fluidName(nbt['gt.tank.4']['FluidName'])+": "+GREEN+nbt['gt.tank.4']['Amount'] + Unit("L");
+		if(nbt['gt.tank.5']!=undefined) ret += " | " + fluidName(nbt['gt.tank.5']['FluidName'])+": "+GREEN+nbt['gt.tank.5']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+		<line displayname = "">
+		if(nbt['gt.mlast.8'] == undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.6']!=undefined) ret += fluidName(nbt['gt.tank.6']['FluidName'])+": "+GREEN+nbt['gt.tank.6']['Amount'] + Unit("L");
+		if(nbt['gt.tank.7']!=undefined) ret += " | " + fluidName(nbt['gt.tank.7']['FluidName'])+": "+GREEN+nbt['gt.tank.7']['Amount'] + Unit("L");
+		if(nbt['gt.tank.8']!=undefined) ret += " | " + fluidName(nbt['gt.tank.8']['FluidName'])+": "+GREEN+nbt['gt.tank.8']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+	</tileentity>
+	<tileentity id = "gt.multitileentity.generator.burning_liquid">
+	    <line displayname = "剩余热量">
+		if(nbt['gt.active']!= undefined){
+		return nbt['gt.energy']+BLUE+" HU";
+		}
+		</line>
+		<line displayname = "燃料情况">
+		if(nbt['gt.tank']['FluidName']!=undefined){
+			return nbt['gt.tank']['Amount'] + " / " + BurningBox_Cap(nbt['gt.mte.id']) + Unit("L") + fluidName(nbt['gt.tank']['FluidName']);
+		}
+		</line>
+	</tileentity>
+	<tileentity id = "gt.multitileentity.generator.burning_gas">
+	    <line displayname = "剩余热量">
+		if(nbt['gt.active']!= undefined){
+		return nbt['gt.energy']+BLUE+" HU"}
+		</line>
+		<line displayname = "燃料情况">
+		if(nbt['gt.tank']['FluidName']!=undefined){
+			return nbt['gt.tank']['Amount'] + " / " + BurningBox_Cap(nbt['gt.mte.id']) + Unit("L") + " " +fluidName(nbt['gt.tank']['FluidName']);
+		}
+		</line>
+	</tileentity>
+	<!-- 砖块燃烧室 -->
+	<tileentity id = "gt.multitileentity.generator.burning_brick">
+	    <line displayname = "剩余热量">
+		if(nbt['gt.active']!= undefined){
+		return nbt['gt.energy']+BLUE+" HU"}
+		</line>  
+		<line displayname = "燃料情况">
+		if(nbt['gt.invlist']['0']['Damage']!=8200)
+		if(nbt['gt.invlist']['0']['Damage']!=8201){
+		return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0'])}	
+		</line>
+		<line displayname = "灰烬情况">
+		switch(nbt['gt.invlist']['0']['Damage']) {
+		case 8200:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
+		    break;
+		case 8201:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
+		    break;}
+		</line>
+		<line displayname = "灰烬情况">
+		return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['1'])
+		</line>
+	</tileentity>
+	<!--蒸馏塔 -->
+	<tileentity id = "gt.multitileentity.multiblock.distillationtower">
+	
+	<line displayname = "工作状态">
+		if(nbt['gt.state.str'] == undefined){}
+		else{
+			return isMachineWork(nbt);
+		}
+	</line>
+	<line displayname= "处理进度">
+		if(nbt['gt.maxprogress'] != undefined){
+			return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
+		}
+	</line>
+	<line displayname = "输入流体">{
+		if(nbt['gt.tank.in.0']['Amount'] != undefined){
+			return nbt['gt.tank.in.0']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.in.0']['FluidName']);
+		}
+	}
+	</line>
+	<line displayname = "输出流体1">
+		if(nbt['gt.tank.out.0']['Amount'] != undefined){
+		return nbt['gt.tank.out.0']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.0']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体2">
+		if(nbt['gt.tank.out.1']['Amount'] != undefined){
+		return nbt['gt.tank.out.1']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.1']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体3">
+		if(nbt['gt.tank.out.2']['Amount'] != undefined){
+		return nbt['gt.tank.out.2']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.2']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体4">
+		if(nbt['gt.tank.out.3']['Amount'] != undefined){
+		return nbt['gt.tank.out.3']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.3']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体5">
+		if(nbt['gt.tank.out.4']['Amount'] != undefined){
+		return nbt['gt.tank.out.4']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.4']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体6">
+		if(nbt['gt.tank.out.5']['Amount'] != undefined){
+		return nbt['gt.tank.out.5']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.5']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体7">
+		if(nbt['gt.tank.out.6']['Amount'] != undefined){
+		return nbt['gt.tank.out.6']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.6']['FluidName']);
+		}
+	</line>
+
+	</tileentity>
+	<!-- -->
+	<tileentity id = "gt.multitileentity.multiblock.crucible">
+	    <line displayname = "当前温度">
+		var temp = nbt['gt.temperature'];
+		var s1 = temp + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+        var s2 = ">" + tempLimit + Unit("K") +" / " + getMaxTemperature(nbt) + Unit("K");
+		switch(showTemprature){
+			case "Always": return s1;
+			case "Never": return null;
+			case "Thermometer":{
+				if(getPlayer().func_70694_bm() == null) return null;
+				var meta = getPlayer().func_70694_bm().func_77960_j();
+				var hold = holding().toString();
+				if(meta != 10000 || hold != "gregtech:gt.multiitem.randomtools") return null;
+				return s1;
+			}
+			case "TempLimit": if(temp <= tempLimit) return s1; else return s2;
+		}
+		</line>
+		
+		<line displayname = "熔炼物种数">
+			if(nbt['gt.state.str'] != undefined){
+				return nbt['gt.materials']['size'] + Unit("种");
+			}
+        </line>
+		
+		<line displayname = "熔炼物1-4情况">
+				if(nbt['gt.materials']['0'] != undefined){
+					var str = '';
+					var i = 0;
+	
+					while(i < 4){
+						if(nbt['gt.materials'][i.toString()] != undefined){
+							str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+						}
+						if(((i + 1) < 4) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+							str += " | ";
+						}	
+						i++;
+					}
+					return str;
+				}
+			
+        </line>
+		
+		<line displayname = "熔炼物5-8情况">
+	
+			if(nbt['gt.materials']['4'] != undefined){
+				var str = '';
+				var i = 4;
+				while(i < 8){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 8) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+		
+		<line displayname = "熔炼物9-12情况">
+		
+			if(nbt['gt.materials']['8'] != undefined){
+				var str = '';
+				var i = 8;
+				while(i < 12){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 12) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+	
+		<line displayname = "熔炼物13-16情况">
+		
+			if(nbt['gt.materials']['12'] != undefined){
+				var str = '';
+				var i = 12;
+
+				while(i < 16){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 16) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+	
+		<line displayname = "熔炼物17-20情况">
+		
+			if(nbt['gt.materials']['16'] != undefined){
+				var str = '';
+				var i = 16;
+
+				while(i < 20){
+					if(nbt['gt.materials'][i.toString()] != undefined){
+						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
+					}
+					if(((i + 1) < 20) && (nbt['gt.materials'][(i + 1).toString()] != undefined)){
+						str += " | ";
+					}
+					i++;
+				}
+
+				return str;
+			}
+		
+        </line>
+	</tileentity>
+	
+	<!-- -->
+	<tileentity id = "gt.multitileentity.multiblock.centrifuge">
+		<line displayname = "工作状态">
+			if(nbt['gt.state.str'] == undefined){}
+			else{
+				return isMachineWork(nbt);
+			}
+		</line>
+		<line displayname = "处理进度">
+		if(nbt['gt.maxprogress'] != undefined){
+				return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
+		}
+		</line>
+		<line displayname = "输入物品">
+			getSlotItem(nbt,0);
+		</line>
+
+	</tileentity>
+	<!--蒸馏塔 -->
+	<tileentity id = "gt.multitileentity.multiblock.cryodistillationtower">
+	<line displayname = "工作状态">
+		if(nbt['gt.state.str'] == undefined){}
+		else{
+			return isMachineWork(nbt);
+		}
+	</line>
+	<line displayname = "输入流体">{
+		if(nbt['gt.tank.in.0']['Amount'] != undefined){
+			return nbt['gt.tank.in.0']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.in.0']['FluidName']);
+		}
+	}
+	</line>
+	<line displayname = "输出流体1">
+		if(nbt['gt.tank.out.0']['Amount'] != undefined){
+		return nbt['gt.tank.out.0']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.0']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体2">
+		if(nbt['gt.tank.out.1']['Amount'] != undefined){
+		return nbt['gt.tank.out.1']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.1']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体3">
+		if(nbt['gt.tank.out.2']['Amount'] != undefined){
+		return nbt['gt.tank.out.2']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.2']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体4">
+		if(nbt['gt.tank.out.3']['Amount'] != undefined){
+		return nbt['gt.tank.out.3']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.3']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体5">
+		if(nbt['gt.tank.out.4']['Amount'] != undefined){
+		return nbt['gt.tank.out.4']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.4']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体6">
+		if(nbt['gt.tank.out.5']['Amount'] != undefined){
+		return nbt['gt.tank.out.5']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.5']['FluidName']);
+		}
+	</line>
+	<line displayname = "输出流体7">
+		if(nbt['gt.tank.out.6']['Amount'] != undefined){
+		return nbt['gt.tank.out.6']['Amount'] + Unit("L") +  " " +fluidName(nbt['gt.tank.out.6']['FluidName']);
+		}
+	</line>
+	<line displayname= "处理进度">
+		if(nbt['gt.maxprogress'] != undefined){
+			return nbt['gt.progress'] / nbt['gt.minenergy'] / 20 + " / " + nbt['gt.maxprogress'] / nbt['gt.minenergy'] / 20 + Unit("S");
+		}
+	</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.generator.burning_fluidbed">
+	    <line displayname = "剩余热量">
+		if(nbt['gt.active']!= undefined){
+		return nbt['gt.energy']+BLUE+" HU"}
+		</line>  
+		<line displayname = "熔融方解石供应">
+		if(nbt['gt.tank']['Amount']!=undefined){
+		return WHITE + nbt['gt.tank']['Amount'] + " / 1000" + Unit("L");
+		}
+		return "0 / 1000" + Unit("L");
+		</line>
+		<line displayname = "燃料情况">
+		if(nbt['gt.invlist']['0']['Damage']!=8200)
+		if(nbt['gt.invlist']['0']['Damage']!=8201){
+		return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0'])}	
+		</line>
+		<line displayname = "灰烬情况">
+		switch(nbt['gt.invlist']['0']['Damage']) {
+		case 8200:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
+		    break;
+		case 8201:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
+		    break;}
+		</line>
+		<line displayname = "灰烬情况">
+		return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['1'])
+		</line>
+	</tileentity>
+	<!--旋转泵-->
+	<tileentity id = "gt.multitileentity.pump.rotation">
+		<line displayname = "工作状态">
+			if(nbt['gt.active.data'] == undefined){
+				return RED + "停机";
+			}
+			if(nbt['gt.active.data'] != -1){
+				return GREEN + "运行中";
+			}
+			else{
+				return BLUE + "工作完成";
+			}
+		</line>
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+		<line displayname = "能量缓存">
+			if(nbt['gt.energy'] == undefined){return null;}
+			return nbt['gt.energy'] + Unit("RU");
+
+		</line>
+	</tileentity>
+	
+	<!-- 加热器 -->
+	<tileentity id = "gt.multitileentity.generator.burning_solid">
+	    <line displayname = "剩余热量">
+		if(nbt['gt.active']!= undefined){
+		return nbt['gt.energy']+BLUE+" HU"}
+		</line>  
+		<line displayname = "燃料情况">
+		if(nbt['gt.invlist']['0']['Damage']!=8200)
+		if(nbt['gt.invlist']['0']['Damage']!=8201){
+		return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0'])}	
+		</line>
+		<line displayname = "灰烬情况">
+		switch(nbt['gt.invlist']['0']['Damage']) {
+		case 8200:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
+		    break;
+		case 8201:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
+		    break;}
+		</line>
+		<line displayname = "灰烬情况">
+		return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['1'])
+		</line>
+	</tileentity>
+
+	<!-- 油泉 -->
+	<tileentity id = "gt.multitileentity.fluid.spring">
+	    <line displayname = "生成速度">
+			var str = ' ';
+			var AmountTemp = nbt['gt.spring']['Amount'];
+			if(AmountTemp > 20 * 60 * 60 * 24){
+				str += parseInt(AmountTemp / (20 * 60 * 60 * 24)) + " 天";
+				AmountTemp = AmountTemp % (20 * 60 * 60 * 24);
+			}
+			if(AmountTemp > 20 * 60 * 60){
+				str += parseInt(AmountTemp / (20 * 60 * 60)) + " 小时";
+				AmountTemp = AmountTemp % (20 * 60 * 60);
+			}
+			if(AmountTemp > 20 * 60){
+				str += parseInt(AmountTemp / (20 * 60)) + " 分钟";
+				AmountTemp = AmountTemp % (20 * 60);
+			}
+			if(AmountTemp > 20){
+				str += parseInt(AmountTemp / (20)) + " 秒";
+				AmountTemp = AmountTemp % (20);
+			}
+			if(AmountTemp > 0){
+				str += parseInt(AmountTemp) + " Tick";
+			}
+
+			return str + "/桶";
+		</line>
+
+		<line displayname = "流体种类">
+			if(nbt['gt.spring']['FluidName'] != null){
+				return fluidName(nbt['gt.spring']['FluidName']);
+			}
+		</line>  
+
+	</tileentity>
+
+	<!-- 单方块储罐 -->
+	<tileentity id = "gt.multitileentity.tank.barrel.*">
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/" + LiquidCap(nbt) + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+	<!-- 多方块储罐 -->
+	<tileentity id = "gt.multitileentity.multiblock.tank.*">
+ 
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/" + LiquidCap(nbt) + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+	<tileentity id = "gt.multitileentity.multiblock.implosioncompressor">
+ 
+		<line displayname = "工作状态">
+			if(nbt['gt.state.str'] == undefined){}
+			else{
+				return isMachineWork(nbt);
+			}
+		</line>
+		<line displayname = "工作进度">
+		if(nbt['gt.maxprogress'] != undefined){
+
+		return nbt['gt.progress'] / 20 + " / " + nbt['gt.maxprogress'] / 20 + Unit("S");
+
+		}
+		</line>
+		<line displayname = "输入物品1">
+			return getSlotItem(nbt,0);
+		</line>
+		<line displayname = "输入物品2">
+			return getSlotItem(nbt,1);
+		</line>
+		<line displayname = "输入物品3">
+			return getSlotItem(nbt,2);
+		</line>
+		<line displayname = "正在加工">
+			return nbt['gt.invout.0']['Count'] + Unit("个 ") + name(nbt['gt.invout.0']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.1']['Count'] + Unit("个 ") + name(nbt['gt.invout.1']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.2']['Count'] + Unit("个 ") + name(nbt['gt.invout.2']);
+		</line>
+		<line displayname = "输出物品1">
+			return getSlotItem(nbt,3);
+		</line>
+		<line displayname = "输出物品2">
+			return getSlotItem(nbt,4);
+		</line>
+		<line displayname = "输出物品3">
+			return getSlotItem(nbt,5);
+		</line>
+
+	</tileentity>
+	
+	<!-- 单元式流体容器 -->
+	<tileentity id = "gt.multitileentity.cell">
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/1000" + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 瓷杯 -->
+	<tileentity id = "gt.multitileentity.cup">
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/250" + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 陶杯 -->
+	<tileentity id = "gt.multitileentity.jug">
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/2000" + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 量杯 -->
+	<tileentity id = "gt.multitileentity.measuring.pot">
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/1000" + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 保温杯 -->
+	<tileentity id = "gt.multitileentity.thermos.can">
+		<line displayname = "流体存量">
+			return nbt['gt.tank']['Amount'] + "/4000" + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 木质浸洗盆 -->
+	<tileentity id = "gt.multitileentity.bathing.*">
+		<line displayname = "输入物品1">
+			if(nbt['gt.invlist']['0']['s'] == 0){
+				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+			}
+		</line>
+
+		<line displayname = "输入物品2">
+			if(nbt['gt.invlist']['1']['s'] == 1){
+				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
+			}
+		</line>
+
+		<line displayname = "输入物品3">
+			if(nbt['gt.invlist']['2']['s'] == 2){
+				return nbt['gt.invlist']['2']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['2']);
+			}
+		</line>
+
+		<line displayname = "输入物品4">
+			if(nbt['gt.invlist']['3']['s'] == 3){
+				return nbt['gt.invlist']['3']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['3']);
+			}
+		</line>
+
+		<line displayname = "输入物品5">
+			if(nbt['gt.invlist']['4']['s'] == 4){
+				return nbt['gt.invlist']['4']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['4']);
+			}
+		</line>
+
+		<line displayname = "输入物品6">
+			if(nbt['gt.invlist']['5']['s'] == 5){
+				return nbt['gt.invlist']['5']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['5']);
+			}
+		</line>
+
+		<line displayname = "输入流体">
+			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
+		</line>
+
+		<line displayname = "输出物品1">
+			return getSlotItem(nbt,6,12);
+		</line>
+
+		<line displayname = "输出物品2">
+			return getSlotItem(nbt,7,12);
+		</line>
+
+		<line displayname = "输出物品3">
+			return getSlotItem(nbt,8,12);
+		</line>
+
+		<line displayname = "输出物品4">
+			return getSlotItem(nbt,9,12);
+		</line>
+
+		<line displayname = "输出物品5">
+			return getSlotItem(nbt,10,12);
+		</line>
+
+		<line displayname = "输出物品6">
+			return getSlotItem(nbt,11,12);
+		</line>
+
+		<line displayname = "输出流体1">
+			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
+		</line>
+
+		<line displayname = "输出流体2">
+			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
+		</line>
+
+		<line displayname = "输出流体3">
+			return nbt['gt.tank.out.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.2']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	
+
+	<!-- 搅拌盆 -->
+	<tileentity id = "gt.multitileentity.mixing.*">
+		<line displayname = "输入物品1">
+			if(nbt['gt.invlist']['0']['s'] == 0){
+				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+			}
+		</line>
+
+		<line displayname = "输入物品2">
+			if(nbt['gt.invlist']['1']['s'] == 1){
+				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
+			}
+		</line>
+
+		<line displayname = "输入物品3">
+			if(nbt['gt.invlist']['2']['s'] == 2){
+				return nbt['gt.invlist']['2']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['2']);
+			}
+		</line>
+
+		<line displayname = "输入物品4">
+			if(nbt['gt.invlist']['3']['s'] == 3){
+				return nbt['gt.invlist']['3']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['3']);
+			}
+		</line>
+
+		<line displayname = "输入物品5">
+			if(nbt['gt.invlist']['4']['s'] == 4){
+				return nbt['gt.invlist']['4']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['4']);
+			}
+		</line>
+
+		<line displayname = "输入物品6">
+			if(nbt['gt.invlist']['5']['s'] == 5){
+				return nbt['gt.invlist']['5']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['5']);
+			}
+		</line>
+
+		<line displayname = "输入流体1">
+			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
+		</line>
+
+		<line displayname = "输入流体2">
+			return nbt['gt.tank.in.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.1']['FluidName']);
+		</line>
+
+		<line displayname = "输入流体3">
+			return nbt['gt.tank.in.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.2']['FluidName']);
+		</line>
+
+		<line displayname = "输入流体4">
+			return nbt['gt.tank.in.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.3']['FluidName']);
+		</line>
+
+		<line displayname = "输入流体5">
+			return nbt['gt.tank.in.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.4']['FluidName']);
+		</line>
+
+		<line displayname = "输入流体6">
+			return nbt['gt.tank.in.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.5']['FluidName']);
+		</line>
+
+		<line displayname = "输出物品">
+			var i = 0;
+			while(i < 7){
+				if(nbt['gt.invlist'][i.toString()]['s'] == 6){
+					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
+				}
+				i++
+			}
+		</line>
+
+		<line displayname = "输出流体1">
+			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
+		</line>
+
+		<line displayname = "输出流体2">
+			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
+		</line>
+
+	</tileentity>
+
+
+	<!-- 榨汁机 -->
+	<tileentity id = "gt.multitileentity.juicer">
+		<line displayname = "输出流体">
+			return nbt['gt.tank.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.0']['FluidName']);
+		</line>
+
+	</tileentity>
+
+
+
+	<!-- 树液/乳胶收集袋 -->
+	<tileentity id = "gt.multitileentity.sapbag">
+		<line displayname = "收集物品">
+			if(nbt['gt.invlist'] != undefined){
+				return nbt['gt.invlist']['0']['Count'] + "/64" + Unit("个 ") + name(nbt['gt.invlist']['0']);
+			}
+			if(nbt['gt.tank'] != undefined){
+				return nbt['gt.tank']['Amount'] + "/8000" + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+			}
+			return "无";
+		</line>
+
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.heater.heat_flux">
+		<line displayname = "工作状态">
+			if(nbt['gt.energy'] < parseInt(ID2Tier(nbt['gt.mte.id'],"RF","HU",1) / 2)){
+				return RED + "输入功率不足，请加大输入功率";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			return RED + "停机";
+		</line>
+	<line displayname = "输入功率">
+		if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","HU",1) / 2)){
+			return nbt['gt.energy'] + Unit("RF") + "/t";
+		}
+	</line>
+	<line displayname = "输出功率">
+		if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","HU",1) / 2)){
+			return parseInt(nbt['gt.energy'] / 8) + Unit("HU") +"/t";
+		}
+	</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.motors.rotation_flux">
+		<line displayname = "工作状态">
+			if(nbt['gt.energy'] < parseInt(ID2Tier(nbt['gt.mte.id'],"RF","RU",1) / 2)){
+				return RED + "输入功率不足，请加大输入功率";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			return RED + "停机";
+		</line>
+		<line displayname = "输入功率">
+		if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","RU",1) / 2)){
+			return nbt['gt.energy'] + Unit("RF") + "/t"
+		}
+		</line>
+		<line displayname = "输出功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","RU",1) / 2)){
+				return parseInt(nbt['gt.energy'] / 8) + Unit("RU") +"/t";
+			}
+		</line>
+		<line displayname = "旋转方向">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				if(nbt['gt.reversed'] != undefined){
+					return BLUE + "顺时针";
+				}
+				return BLUE + "逆时针";
+			}
+		</line>
+		
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.magnet.magnet_flux">
+		<line displayname = "工作状态">
+			if(nbt['gt.energy'] < parseInt(ID2Tier(nbt['gt.mte.id'],"RF","MU",1) / 2)){
+				return RED + "输入功率不足，请加大输入功率";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			return RED + "停机";
+		</line>
+		<line displayname = "输入功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","MU",1) / 2)){
+				return nbt['gt.energy'] + Unit("RF") + "/t";
+			}
+		</line>
+		<line displayname = "输出功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","MU",1) / 2)){
+				return parseInt(nbt['gt.energy'] / 8) + Unit("MU") +"/t";
+			}
+		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.laser.laser_flux">
+		<line displayname = "工作状态">
+			if(nbt['gt.energy'] < parseInt(ID2Tier(nbt['gt.mte.id'],"RF","LU",1) / 2)){
+				return RED + "输入功率不足，请加大输入功率";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			return RED + "停机";
+		</line>
+		<line displayname = "输入功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","LU",1) / 2)){
+				return nbt['gt.energy'] + Unit("RF") + "/t";
+			}
+		</line>
+		<line displayname = "输出功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","LU",1) / 2)){
+				return parseInt(nbt['gt.energy'] / 8) + Unit("LU") +"/t";
+			}
+		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.engine.kinetic_flux">
+		<line displayname = "工作状态">
+			if(nbt['gt.energy'] < parseInt(ID2Tier(nbt['gt.mte.id'],"RF","KU",1) / 2)){
+				return RED + "输入功率不足，请加大输入功率";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			return RED + "停机";
+		</line>
+		<line displayname = "输入功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","KU",1) / 2)){
+				return nbt['gt.energy'] + Unit("RF") + "/t";
+			}
+		</line>
+		<line displayname = "输出功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","KU",1) / 2)){
+				return parseInt(nbt['gt.energy'] / 8) + Unit("KU") +"/t";
+			}
+		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.cooler.cryo_flux">
+		<line displayname = "工作状态">
+			if(nbt['gt.energy'] < parseInt(ID2Tier(nbt['gt.mte.id'],"RF","CU",1) / 2)){
+				return RED + "输入功率不足，请加大输入功率";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GREEN + "运行";
+			}
+			return RED + "停机";
+		</line>
+		<line displayname = "输入功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","CU",1) / 2)){
+				return nbt['gt.energy'] + Unit("RF") + "/t";	
+			}
+
+		</line>
+		<line displayname = "HU输出功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","CU",1) / 2)){
+				return parseInt(nbt['gt.energy'] / 16) + Unit("HU") +"/t";
+			}
+		</line>
+		<line displayname = "CU输出功率">
+			if(nbt['gt.energy'] >= parseInt(ID2Tier(nbt['gt.mte.id'],"RF","CU",1) / 2)){
+				return parseInt(nbt['gt.energy'] / 16) + Unit("CU") +"/t";
+			}
+		</line>
+	</tileentity>
+
+	</tileentity>
+	<tileentity id = "gt.multitileentity.multiblock.drill.bedrock">
+	<line displayname = "警告">
+		checkComplete(nbt);
+	</line>
+	<line displayname = "润滑油储量">
+		return nbt['gt.tank.0']['Amount'] + " / 16000" + Unit("L");
+	</line>
+	<line displayname = "能量储量">
+		return nbt['gt.energy'] + " / 32768" + Unit("EU");
+	</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.multiblock.boiler.steam">
+		<line displayname = "警告">
+			checkComplete(nbt);
+		</line>
+		<line displayname = "爆炸警告1">
+			if((nbt['gt.tank.1']['Amount'] / (SteamCap(nbt))) > 0.10){
+				return RED + "此时使用扳手拆除会造成威力" + ExplodeRoundSU(nbt['gt.tank.1']['Amount']) + "点的爆炸";
+			}
+		</line>
+
+		<line displayname = "爆炸警告2">
+			if((nbt['gt.tank.1']['Amount'] / (SteamCap(nbt))) > 0.46){
+				return RED + "此时使用凿子清理锅炉会造成威力" + ExplodeRoundSU(nbt['gt.tank.1']['Amount']) + "点的爆炸";
+			}
+		</line>
+
+		<line displayname = "烫伤警告">
+
+				if((nbt['gt.energy'] != undefined) && (nbt['gt.tank.1']['Amount'] != undefined)){
+					if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
+						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],1) + "点伤害";
+					}
+				}
+
+				if(nbt['gt.energy'] != undefined){
+					if(nbt['gt.tank.1']['Amount'] != undefined){
+						if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
+							return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],1) + "点伤害";
+						}
+					}
+					if((nbt['gt.energy']) > 2000){
+						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],0,1) + "点伤害";
+					}
+				}
+				if(nbt['gt.tank.1']['Amount'] != undefined){
+					if((nbt['gt.tank.1']['Amount'] / 2) > 2000){
+						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(0,nbt['gt.tank.1']['Amount'],1) + "点伤害";
+					}
+				}
+			
+		</line>
+
+		<line displayname = "工作状态">
+			if(nbt['gt.tank.1']['Amount'] * 2 >= (SteamCap(nbt))){
+				return GREEN + "运行";
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				return BLUE + "预热";
+			}
+			if(nbt['gt.energy'] != undefined){
+				return GOLD + "干烧";
+			}
+			return RED + "停机";
+		</line>
+
+		<line displayname = "效率">
+			if(nbt['gt.eff'] != undefined){
+				return nbt['gt.eff'] / 100 + "%";
+			}
+			return "100.00%";
+		</line>
+
+		<line displayname = "热量储量">
+			if(nbt['gt.energy'] != undefined){
+				return nbt['gt.energy'] + "/" + SteamCap(nbt) + Unit("HU") + " - " + parseInt(nbt['gt.energy'] / SteamCap(nbt) * 10000) / 100 + "%";
+			}
+			return "0/" + SteamCap(nbt) + Unit("HU") + " - " + "0.00%";
+		</line>
+
+	    <line displayname = "水类型">
+			return fluidName(nbt['gt.tank.0']['FluidName']);
+		</line>
+
+		<line displayname = "水储量">
+			if(nbt['gt.tank.0'] != undefined){
+				return nbt['gt.tank.0']['Amount'] + "/128000" + Unit("L");
+			}
+			return "0/128000" + Unit("L");
+		</line>
+
+		<line displayname = "蒸汽储量">
+			if(nbt['gt.tank.1'] != undefined){
+				return nbt['gt.tank.1']['Amount'] + "/" + SteamCap(nbt) + Unit("L") + " - " + parseInt(nbt['gt.tank.1']['Amount'] / SteamCap(nbt) * 10000) / 100 + "%";
+			}
+			return "0/" + SteamCap(nbt) + Unit("L") + " - " + "0.00%";
+		</line>
+	</tileentity>
+	<tileentity id = "gt.multitileentity.multiblock.turbine.steam">
+		<line displayname = "警告">
+			checkComplete(nbt);
+		</line>
+		<line displayname = "工作状态">
+			if(nbt['gt.output.su'] != undefined){
+				if((nbt['gt.output.su'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return BLUE + "超载";
+				}
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				if((nbt['gt.tank.0']['Amount'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return BLUE + "超载";
+				}
+			}	
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输出功率">
+			if(nbt['gt.output.su'] != undefined){
+				if((nbt['gt.output.su'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return RED + "机器超载无法正常工作，请降低输入功率"
+				}
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				if((nbt['gt.tank.0']['Amount'] / 3) > (ID2Tier(nbt['gt.mte.id'],"SU","RU",0) * 2)){
+					return RED + "机器超载无法正常工作，请降低输入功率"
+				}
+			}
+			if(nbt['gt.output.su'] != undefined){
+				return parseInt(nbt['gt.output.su'] / 3) + Unit("RU") + "/t";
+			}
+			if(nbt['gt.tank.0'] != undefined){
+				return parseInt(nbt['gt.tank.0']['Amount'] / 3) + Unit("RU") + "/t";
+			}
+			return "0" + Unit("RU") + "/t";
+		</line>
+
+		<line displayname = "蒸汽储量">
+			if(nbt['gt.tank.0'] != undefined){
+				return nbt['gt.tank.0']['Amount'] + "/" + bind(1,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","RU",1) * 2 * 4) + Unit("L");
+			}
+			return "0/" + bind(1,2147483647,ID2Tier(nbt['gt.mte.id'],"SU","RU",1) * 2 * 4) + Unit("L");
+		</line>
+
+		<line displayname = "旋转方向">
+			if(nbt['gt.can.energy'] == 1 && nbt['gt.facing'] == 1){
+				if(nbt['gt.reversed'] != undefined){
+					return BLUE + "顺时针";
+				}
+				return BLUE + "逆时针";
+			}
+		</line>
+	</tileentity>
+
+	<tileentity id = "gt.multitileentity.multiblock.dynamo">
+		<line displayname = "警告">
+			checkComplete(nbt);
+		</line>
+		<line displayname = "工作状态">
+			isRun(nbt);
+		</line>
+
+		<line displayname = "输入功率">
+			return ID2Tier(nbt['gt.mte.id'],"RU","EU",1) + Unit("RU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"RU","EU",1) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"RU","EU",1) * 2 + ")";
+		</line>
+
+		<line displayname = "输出功率">
+			return ID2Tier(nbt['gt.mte.id'],"RU","EU",0) + Unit("EU") + "/t" + " - " + "(" + ID2Tier(nbt['gt.mte.id'],"RU","EU",0) / 2 + " to " + ID2Tier(nbt['gt.mte.id'],"RU","EU",0) * 2 + ")";
+		</line>
+
+	</tileentity>
+
+	<tileentity id = "gt.multitileentity.multiblock.turbine.gas">
+		<line displayname = "警告">
+			checkComplete(nbt);
+		</line>
+		<line displayname = "燃料情况">
+			return nbt['gt.tank']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']); 
+		</line>
+		
+	</tileentity>
+
+	<!-- 筛粉漏斗 -->
+	<tileentity id = "gt.multitileentity.funnel.dust">
+		<line displayname = "输出模式">
+			switch(nbt['gt.mode']){
+				case 0:{return BLUE + "块状粉末";}
+				case 1:{return BLUE + "粉末";}
+				case 2:{return BLUE + "小堆粉末";}
+				case 3:{return BLUE + "小撮粉末";}
+				case 4:{return BLUE + "1/72 粉末";}
+			}
+		</line>
+
+		<line displayname = "物品存量">
+			try{
+				var mDust = -1;
+				var mAmount = 0;
+				if(nbt['gt.invlist']['0']['s'] == 0){
+					var strT = name(nbt['gt.invlist']['0']);
+					if(strT.indexOf("粉块") >= 0){
+						mDust = 0;
+					}
+					else if(strT.indexOf("1/72") >= 0){
+						mDust = 4;
+					}
+					else if(strT.indexOf("小撮") >= 0){
+						mDust = 3;
+					}
+					else if(strT.indexOf("小堆") >= 0){
+						mDust = 2;
+					}
+					else{
+						mDust = 1;
+					}
+					mAmount += nbt['gt.invlist']['0']['Count'];
+				}
+
+				if(nbt['gt.materials']['a'] != undefined){
+					switch(mDust){
+						case 0:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 / 9 * 1000) / 1000;break;}
+						case 1:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 1000) / 1000;break;}
+						case 2:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 4 * 1000) / 1000;break;}
+						case 3:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 9 * 1000) / 1000;break;}
+						case 4:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 72 * 1000) / 1000;break;}
+						case -1:{
+							switch(nbt['gt.mode']){
+								case 0:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 / 9 * 1000) / 1000;break;}
+								case 1:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 1000) / 1000;break;}
+								case 2:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 4 * 1000) / 1000;break;}
+								case 3:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 9 * 1000) / 1000;break;}
+								case 4:{mAmount += parseInt(nbt['gt.materials']['a'] / 648648000 * 72 * 1000) / 1000;break;}
+							}
+							break;
+						}	
+					}
+				}
+				if(nbt['gt.invlist']['0']['s'] == 0){
+					return mAmount + Unit("个 ") + name(nbt['gt.invlist']['0']);
+				}
+				try{
+					switch(nbt['gt.mode']){
+						case 0:{return mAmount + Unit("个 ") + ID2Name(nbt['gt.invlist']['0']['Damage'],"storage.dust");}
+						case 1:{return mAmount + Unit("个 ") + ID2Name(nbt['gt.invlist']['0']['Damage'],"dust");}
+						case 2:{return mAmount + Unit("个 ") + ID2Name(nbt['gt.invlist']['0']['Damage'],"dustSmall");}
+						case 3:{return mAmount + Unit("个 ") + ID2Name(nbt['gt.invlist']['0']['Damage'],"dustTiny");}
+						case 4:{return mAmount + Unit("个 ") + ID2Name(nbt['gt.invlist']['0']['Damage'],"dustDiv72");}
+					}
+				}
+				catch(e){
+					if(nbt['gt.materials']['a'] != undefined){
+						return parseInt(nbt['gt.materials']['a'] / 420076800 * 1000) / 1000 + Unit("份 ") + nbt['gt.materials']['i'];
+					}
+				}
+			}
+			catch(e){
+				if(nbt['gt.invlist']['0']['s'] == 0){
+					return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+				}
+			}
+			return BLUE + "无";
+		</line>
+
+		<line displayname = "准备输出">
+			var i = 0;
+			while(i < 2){
+				if(nbt['gt.invlist'][i.toString()]['s'] == 1){
+					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
+				}
+				i++;
+			}
+			return BLUE + "无";
+		</line>
+
+		<line displayname = "正在输出">
+			var str = "1" + Unit("个 ");
+			try{
+				switch(nbt['gt.mode']){
+					case 0:{str += ID2Name(nbt['gt.invlist']['0']['Damage'],"storage.dust");break;}
+					case 1:{str += ID2Name(nbt['gt.invlist']['0']['Damage'],"dust");break;}
+					case 2:{str += ID2Name(nbt['gt.invlist']['0']['Damage'],"dustSmall");break;}
+					case 3:{str += ID2Name(nbt['gt.invlist']['0']['Damage'],"dustTiny");break;}
+					case 4:{str += ID2Name(nbt['gt.invlist']['0']['Damage'],"dustDiv72");break;}
+				}
+				try{
+					var i = 0;
+					while(i < 2){
+						if(nbt['gt.invlist'][i.toString()]['s'] == 1){
+							return BLUE + "输出口被堵住，无法输出";
+						}
+						i++;
+					}
+				}
+				catch(e){
+					return str;
+				}
+			}
+			catch(e){}
+		</line>
+
+	</tileentity>
+
+	<!-- 打磨石 -->
+	<tileentity id = "gt.multitileentity.sharpener.grindstone">
+		<line displayname = "工作状态">
+			if(nbt['gt.state'] > 0){
+				return "还可打磨" + " " +nbt['gt.state'] + Unit("个") + "物品";
+			}
+			if(nbt['gt.state'] == 0){
+				return RED + "不可进行打磨，请放入沙石";
+			}
+		</line>
+
+	</tileentity>
+
+	<!-- 筛选台 -->
+	<tileentity id = "gt.multitileentity.sifter.table">
+		<line displayname = "工作状态">
+			switch(nbt['gt.state']){
+				case 0:{return BLUE + "请放入需要进行筛选的物品";}
+				case 1:{return BLUE + "准备进行筛选，请右击顶面";}
+				case 2:{return BLUE + "筛选成功，请取出产物";}
+				case 3:{return BLUE + "取出产物后，再进行下一次筛选";}
+			}
+		</line>
+
+		<line displayname = "输入物品">
+			if(nbt['gt.invlist']['0']['s'] == 0){
+				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+			}
+			if(nbt['gt.state'] == 2){
+				return BLUE + "请取出产物";
+			}
+			return BLUE + "无";
+		</line>
+
+		<line displayname = "输出产物1">
+			getSlotItem(nbt,1);
+		</line>
+
+		<line displayname = "输出产物2">
+			getSlotItem(nbt,2);
+		</line>
+
+		<line displayname = "输出产物3">
+			getSlotItem(nbt,3);
+		</line>
+
+		<line displayname = "输出产物4">
+			getSlotItem(nbt,4);
+		</line>
+
+		<line displayname = "输出产物5">
+			getSlotItem(nbt,5);
+		</line>
+
+		<line displayname = "输出产物6">
+			getSlotItem(nbt,6);
+		</line>
+
+		<line displayname = "输出产物7">
+			getSlotItem(nbt,7);
+		</line>
+
+		<line displayname = "输出产物8">
+			getSlotItem(nbt,8);
+		</line>
+
+		<line displayname = "输出产物9">
+			getSlotItem(nbt,9);
+		</line>
+
+		<line displayname = "输出产物10">
+			getSlotItem(nbt,10);
+		</line>
+
+		<line displayname = "输出产物11">
+			getSlotItem(nbt,11);
+		</line>
+
+		<line displayname = "输出产物12">
+			getSlotItem(nbt,12);
+		</line>
+
+	</tileentity>
+
+	<!-- 焦炉 -->
+	<tileentity id = "gt.multitileentity.multiblock.cokeoven">
+ 
+	
+		<line displayname = "工作状态">
+		
+			try{
+				if(nbt['gt.state.str'] == undefined){}
+				else{
+					if(nbt['gt.active'] != undefined){
+						return BLUE + "运行";
+					}
+					if((nbt['gt.running'] != undefined) && (nbt['gt.invlist']['0']['s'] == 0)){
+						if(nbt['gt.invlist']['1']['Count'] == 64){
+							return RED + "请将输出槽的物品取走";
+						}
+						return RED + "请使用打火石之类的东西点火";
+					}
+					if((nbt['gt.running'] != 1)){
+						return RED + "停机";
+					}
+				}
+			}
+			catch(e){
+				return RED + "请放入待加工的物品";
+			}
+			
+		</line>
+
+		<line displayname = "输入警告">
+			if((nbt['gt.running'] != undefined) && (nbt['gt.invlist']['0']['s'] == 0) && (nbt['gt.active'] != 1)){
+				return RED + "若多次点火失败，请检查是否存在相应合成表";
+			}
+		</line>
+
+		<line displayname = "工作进程">
+			if(nbt['gt.progress'] != undefined && showProgress){
+				return nbt['gt.progress'] / 20 + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
+			}
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.0']['Count'] + Unit("个 ") + name(nbt['gt.invout.0']) + " - " + nbt['gt.tankout.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.0']['FluidName']);
+		</line>
+
+		<line displayname = "输入物品">
+			if(nbt['gt.invlist']['0']['s'] == 0){
+				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+			}
+		</line>
+
+		<line displayname = "输出物品">
+			if(nbt['gt.invlist']['0']['s'] == 1){
+				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
+			}
+			else if(nbt['gt.invlist']['1']['s'] == 1){
+				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
+			}
+		</line>
+
+		<line displayname = "输出流体">
+			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 地表岩石 -->
+	<tileentity id = "gt.multitileentity.rock">
+		<line displayname = "所含物品">
+			return nbt['gt.value']['Count'] + Unit("个 ") + name(nbt['gt.value']);
+		</line>
+	
+	</tileentity>
+
+	<!-- 浆果 -->
+	<tileentity id = "gt.multitileentity.plant.bush">
+		<line displayname = "生长进度">
+			if(nbt['gt.state'] != 3){
+				var t = nbt['gt.state'] * 256;
+				if(nbt['gt.progress'] < 0) t = t + 256;
+				t = t + nbt['gt.progress'];
+				var progress = parseInt(t * 1000 / (256 * 3)) / 10;
+				return progress + " %";
+			}
+			return AQUA + "已成熟，请收获";
+		</line>
+		<!-->
+		<line displayname = "光照提示">
+			return AQUA + "请保持莓丛上方没有被不透明方块遮盖 或光照强度大于9";
+		</line>
+
+		<line displayname = "雨天提示">
+			return AQUA + "下雨时，若莓丛四周有雨水降落，则生长速度加倍";
+		</line>
+		<-->
+		<line displayname = "产出作物">
+			return nbt['gt.value']['Count'] + Unit("个 ") + name(nbt['gt.value']);
+		</line>
+
+	</tileentity>
+
+
+	<!-- 加工机器 -->
+	<tileentity id = "gt.multitileentity.machine.basic">
+		<line displayname = "工作状态">
+			isMachineWork(nbt);
+		</line>
+
+		<line displayname = "工作进程">
+			if(nbt['gt.progress'] != undefined && showProgress){
+				return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
+			}
+		</line>
+
+		<line displayname = "能量需求">
+			if(nbt['gt.minenergy'] != undefined){
+				return nbt['gt.minenergy'] + Unit(ID2EnergyType(nbt['gt.mte.id']));
+			}
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.0']['Count'] + Unit("个 ") + name(nbt['gt.invout.0']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.1']['Count'] + Unit("个 ") + name(nbt['gt.invout.1']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.2']['Count'] + Unit("个 ") + name(nbt['gt.invout.2']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.3']['Count'] + Unit("个 ") + name(nbt['gt.invout.3']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.4']['Count'] + Unit("个 ") + name(nbt['gt.invout.4']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.5']['Count'] + Unit("个 ") + name(nbt['gt.invout.5']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.6']['Count'] + Unit("个 ") + name(nbt['gt.invout.6']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.7']['Count'] + Unit("个 ") + name(nbt['gt.invout.7']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.8']['Count'] + Unit("个 ") + name(nbt['gt.invout.8']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.9']['Count'] + Unit("个 ") + name(nbt['gt.invout.9']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.10']['Count'] + Unit("个 ") + name(nbt['gt.invout.10']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.11']['Count'] + Unit("个 ") + name(nbt['gt.invout.11']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.0']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.1']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.2']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.3']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.4']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.5']['FluidName']);
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,0,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,1,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,2,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,3,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,4,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,5,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,6,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,7,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,8,'I');
+		</line>
+
+		<line displayname = "所放蓝图">
+			IOInv(nbt,0,'B');
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.1']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.2']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.3']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.4']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.5']['FluidName']);
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,0,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,1,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,2,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,3,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,4,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,5,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,6,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,7,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,8,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,9,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,10,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,11,'O');
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.2']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.3']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.4']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.5']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<!-- 电力加工机器 -->
+	<tileentity id = "gt.multitileentity.machine.basic.electric">
+		<line displayname = "工作状态">
+			isMachineWork(nbt);
+		</line>
+
+		<line displayname = "工作进程">
+			if(nbt['gt.progress'] != undefined && showProgress){
+				return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
+			}
+		</line>
+
+		<line displayname = "能量需求">
+			if(nbt['gt.minenergy'] != undefined){
+				return nbt['gt.minenergy'] + Unit(ID2EnergyType(nbt['gt.mte.id']));
+			}
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.0']['Count'] + Unit("个 ") + name(nbt['gt.invout.0']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.1']['Count'] + Unit("个 ") + name(nbt['gt.invout.1']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.2']['Count'] + Unit("个 ") + name(nbt['gt.invout.2']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.3']['Count'] + Unit("个 ") + name(nbt['gt.invout.3']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.4']['Count'] + Unit("个 ") + name(nbt['gt.invout.4']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.5']['Count'] + Unit("个 ") + name(nbt['gt.invout.5']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.6']['Count'] + Unit("个 ") + name(nbt['gt.invout.6']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.7']['Count'] + Unit("个 ") + name(nbt['gt.invout.7']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.8']['Count'] + Unit("个 ") + name(nbt['gt.invout.8']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.9']['Count'] + Unit("个 ") + name(nbt['gt.invout.9']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.10']['Count'] + Unit("个 ") + name(nbt['gt.invout.10']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.invout.11']['Count'] + Unit("个 ") + name(nbt['gt.invout.11']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.0']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.1']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.2']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.3']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.4']['FluidName']);
+		</line>
+
+		<line displayname = "正在加工">
+			return nbt['gt.tankout.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tankout.5']['FluidName']);
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,0,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,1,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,2,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,3,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,4,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,5,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,6,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,7,'I');
+		</line>
+
+		<line displayname = "物品输入">
+			IOInv(nbt,8,'I');
+		</line>
+
+		<line displayname = "所放蓝图">
+			IOInv(nbt,0,'B');
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.1']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.2']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.3']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.4']['FluidName']);
+		</line>
+
+		<line displayname = "流体输入">
+			return nbt['gt.tank.in.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.5']['FluidName']);
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,0,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,1,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,2,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,3,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,4,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,5,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,6,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,7,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,8,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,9,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,10,'O');
+		</line>
+
+		<line displayname = "物品输出">
+			IOInv(nbt,11,'O');
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.2']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.3']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.4']['FluidName']);
+		</line>
+
+		<line displayname = "流体输出">
+			return nbt['gt.tank.out.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.5']['FluidName']);
+		</line>
+
+	</tileentity>
+
+	<tileentity id = "gt.multitileentity.tree.*.*">
+		<line displayname = "工作状态">
+		if(nbt['gt.active'] != undefined){
+			return BLUE + "可以收获";
+		}
+		return BLUE + "不可收获";
+		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.multiblock.*">
+		<line displayname = "警告">
+			if(nbt['id'] != "gt.multitileentity.multiblock.part") return checkComplete(nbt);
+		</line>
+
+	</tileentity>
+	
+	
+	<tileentity id = "gt.multitileentity.generator.reactor.core.*">
+		<line displayname = "冷却介质">
+			return nbt['gt.tank.0']['Amount'] + " / 64000" +  Unit("L") + " " + fluidName(nbt['gt.tank.0']['FluidName']) ;
+		</line>
+		<line displayname = "热流体输出">
+			return nbt['gt.tank.1']['Amount'] + " / 64000" +  Unit("L") + " " + fluidName(nbt['gt.tank.1']['FluidName']) ;
+		</line>
+		<line displayname = "工作状态">	
+			if(nbt['gt.stopped'] == 1) return RED + "停机";
+			return GREEN + "运行中";
+		</line>
+		<line displayname = "热量输出">
+		try{
+			if(nbt['gt.stopped'] == undefined){
+					return getReactorHeat(nbt) + Unit("HU") + "/t";
+			}
+		}
+		catch(e){	
+		}	
+		</line>
+
+		<line displayname = "燃料棒1">
+			try{
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 0){
+
+						var str = name(nbt['gt.invlist'][i.toString()]);
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+			}catch(e){
+			}
+			
+		</line>
+		<line displayname = "燃料棒2">
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 1){
+					
+						var str = name(nbt['gt.invlist'][i.toString()]);
+						if(nbt['gt.invlist'][i.toString()]['tag']!= undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+		</line>
+		<line displayname = "燃料棒3">
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 2){
+						var str = name(nbt['gt.invlist'][i.toString()]);
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+		</line>
+		<line displayname = "燃料棒4">
+				for(i = 0;i < 4;i++){
+				if(nbt['gt.invlist'][i.toString()] != undefined){
+					if(nbt['gt.invlist'][i.toString()]['s'] == 3){
+						var str = name(nbt['gt.invlist'][i.toString()]); 
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						return str;
+					}
+				}
+			}
+		</line>
+
+		
+
+		<line displayname = "中子数">
+		try{
+			if(nbt['gt.stopped'] == 1) return undefined;
+			var n1,n2,n3,n4,str = "";
+			var inv = nbt['gt.invlist'];
+			for(i = 0;i < 4;i++){
+			if(inv[i.toString()] == null) continue;
+				switch(nbt['gt.invlist'][i.toString()]['s']){
+					case 0: {n1 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+					case 1: {n2 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+					case 2: {n3 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+					case 3: {n4 = nbt[("gt.value.o." + inv[i.toString()]['s'])];break;}
+				}
+			}
+		if(n1 != undefined) str += "1: " + n1;
+		if(str != "" && n2 != undefined) str += " | ";
+		if(n2 != undefined) str += "2: " + n2;
+		if(str != "" && n3 != undefined) str += " | ";
+		if(n3 != undefined) str += "3: " + n3;
+		if(str != "" && n4 != undefined) str += " | ";
+		if(n4 != undefined) str += "4: " + n4;
+		if(str != "") return str;
+		else return undefined;
+		}catch(e){
+		}
+		</line>
+	</tileentity>
+	
+	<tileentity id = "gt.multitileentity.multiblock.fusionreactor">
+		<line displayname = "配方需求能量">
+			if(nbt['gt.active'] != 1 && nbt['gt.input.eu'] != undefined) return nbt['gt.input.eu'] + Unit("LU");
+		</line>
+		
+		<line displayname = "能量输出">
+			if(nbt['gt.active'] == 1){
+				return nbt['gt.output'] + Unit("EU") + "/t";
+			}
+		</line>
+		
+		<line displayname = "配方进度">
+			if(nbt['gt.active'] == 1 && showProgress){
+				return (nbt['gt.progress'] / 20) + " / " + (nbt['gt.maxprogress'] / 20) +Unit("S") + " - " + parseInt(nbt['gt.progress'] / nbt['gt.maxprogress'] * 1000) / 10 + "%"
+			}
+		</line>
+		<line displayname = "正在加工">
+			if(nbt['gt.active'] != 1) return undefined;
+			var t1,t2,str = "";
+			if(nbt['gt.tankout.0'] != undefined) t1 = nbt['gt.tankout.0']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tankout.0']['FluidName']);
+			if(nbt['gt.tankout.1'] != undefined) t2 = nbt['gt.tankout.1']['Amount'] + Unit("L") + " "+ fluidName(nbt['gt.tankout.1']['FluidName']);
+			if(t1 != undefined){
+				str += t1;
+			}
+			if(t2 != undefined){
+				str += " | ";
+				str += t2;
+			}
+			return str;
+		</line>
+			<line displayname = "正在加工">
+			if(nbt['gt.active'] != 1) return undefined;
+			var t1,t2,str = "";
+			if(nbt['gt.tankout.2'] != undefined) t1 = nbt['gt.tankout.2']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tankout.2']['FluidName']);
+			if(nbt['gt.tankout.3'] != undefined) t2 = nbt['gt.tankout.3']['Amount'] + Unit("L") + " "+ fluidName(nbt['gt.tankout.3']['FluidName']);
+			if(t1 != undefined){
+				str += t1;
+			}
+			if(t2 != undefined){
+				str += " | ";
+				str += t2;
+			}
+			return str;
+		</line>
+		<line displayname = "正在加工">
+			if(nbt['gt.active'] != 1) return undefined;
+			if(nbt['gt.invout.0'] != undefined) return nbt['gt.invout.0']['Count'] + Unit("个") + " " + name(nbt['gt.invout.0']);
+		</line>
+		
+	</tileentity>
+	<tileentity id = "gt.multitileentity.connector.wire.electric">
+		<line displayname = "功率">
+		try{
+			if(instance == null) return null;
+			if(getPlayer().func_70694_bm() == null) return null;
+			var meta = getPlayer().func_70694_bm().func_77960_j();
+			var hold = holding().toString();
+			var sideVar = ['a','b','c','d','e','f'];
+			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
+			if(meta == 10003 && hold == "gregtech:gt.multiitem.randomtools"){
+				if(nbt['gt.covers'] != undefined){
+					if(nbt['gt.covers'][sideVar[side]] != undefined) return 233;
+				}
+				instance.sendRightClick(nbt['x'],nbt['y'],nbt['z']);
+				var mNBT = eval("("+instance.getData()+")");
+				if(mNBT == null) return null;
+				if(mNBT['x'] ==  nbt['x'] && mNBT['y'] ==  nbt['y'] && mNBT['z'] ==  nbt['z']){
+					return mNBT['eu'] + Unit('EU') + "/t";
+				}
+			}
+		}
+		catch(e){
+		}
+		</line>
+		
+
+	</tileentity>
+	<tileentity id = "gt.multitileentity.connector.axle.rotation">
+		<line displayname = "功率">
+		try{
+			if(instance == null) return null;
+			if(getPlayer().func_70694_bm() == null) return null;
+			var meta = getPlayer().func_70694_bm().func_77960_j();
+			var hold = holding().toString();
+			var sideVar = ['a','b','c','d','e','f'];
+			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
+			if(meta == 10004 && hold == "gregtech:gt.multiitem.randomtools"){
+				if(nbt['gt.covers'] != undefined){
+					if(nbt['gt.covers'][sideVar[side]] != undefined) return 233;
+				}
+				instance.sendRightClick(nbt['x'],nbt['y'],nbt['z']);
+				var mNBT = eval("("+instance.getData()+")");
+				if(mNBT == null) return null;
+				if(mNBT['x'] ==  nbt['x'] && mNBT['y'] ==  nbt['y'] && mNBT['z'] ==  nbt['z']){
+					return mNBT['ru'] + Unit('RU') + "/t";
+				}
+			}
+		}
+		catch(e){
+		}
+		</line>	
+	</tileentity>
+</oo>
