@@ -4,26 +4,127 @@
 <!--Updated Version: 6.15.01,Update Author:mordd -->
 <!--Update Date: 2023/11/16 -->
 <!--Updated Version 6.17.00,Updated Author:mordd -->
-
+<!--Update Date: 2024/3/1-->
+<!--Updated Version:6.17.01,Updated Author:mordd -->
 <oo>
-
-	<!-- 关于脚本的一些配置 -->
-	<!-- 当EnableTempratureLimit = 1 且 CrucibleMaxShowTemp < 200的情况下，坩埚温度将不会显示 -->
+	<!--下列变量为脚本配置-->
+	<!--showTemprature 可用值:Always,Thermometer,Limit,Never.非法值将会视作Always-->
+	<!--tempLimit至少为373-->
+	<!--TODO: showFluidTank 和 showDamage 尚未正确实现 -->
 	<init>
-	importClass(Packages.gregapi.util.UT);
-	importClass(Packages.gregapi.data.MT);
-		function getConfig(aString){
-			switch(aString){
-				case "ScriptStyle":{return "2018a";}
-				case "ShowEnergyCache":{return 1;}
-				case "ShowTouchDamage":{return 1;}
-				case "ShowLiquidCache":{return 1;}
-				case "EnableTemperatureDisplay":{return 1;}
-				case "EnableTemperatureLimit":{return 0;}
-				case "CrucibleMaxShowTemp":{return 1800;}
-			}
+	var showTemprature = "TempLimit";
+	var tempLimit = 373;
+	var showDamage = true;
+	var showFluidTank = true;
+	var showProgress = true;
+	var enableTestContent = true;
+	</init>
+
+	<init>
+	importClass(Packages.net.minecraft.client.Minecraft);
+	var cout = Java.type("gregapi.data.CS").OUT;
+	var testClass = undefined;
+	var loader = Java.type("me.exz.omniocular.OmniOcular").class.getClassLoader();
+	
+	function parseString(s,c) {
+		var ByteArray = Java.type("byte[]");
+		var ret = new ByteArray(c);
+		for(i = 0;i < c;i++) {
+			var s2 = s.substring(0,2);
+			var val = 0;
+			if(s2.charCodeAt(0) > 0x40) val += 16 * (10 + s2.charCodeAt(0) - 0x41);
+			else val += 16 * (s2.charCodeAt(0) - 0x30);
+			if(s2.charCodeAt(1) > 0x40) val += (10 + s2.charCodeAt(1) - 0x41);
+			else val += (s2.charCodeAt(1) - 0x30);
+			ret[i] = val;
+			s = s.substring(3);
 		}
-	</init>	
+		return ret;
+	}
+	
+	function init2(){
+	try{
+		try{
+			cout.println(loader);
+			var base = Java.type("java.lang.Class").forName("mordd.dynamic.GT6SpecialHandler",true,loader);
+			testClass = base;
+		}
+		catch(e){
+		var rawData = "CA FE BA BE 00 00 00 32 01 9A 01 00 1F 6D 6F 72 64 64 2F 64 79 6E 61 6D 69 63 2F 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 07 00 01 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 07 00 03 01 00 16 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 2E 6A 61 76 61 01 00 04 5A 4C 4F 41 01 00 13 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 01 00 0A 4E 55 4C 4C 5F 56 41 4C 55 45 01 00 12 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 01 00 07 56 45 52 53 49 4F 4E 01 00 01 49 03 00 00 00 00 01 00 0A 76 61 69 6C 64 53 74 61 63 6B 01 00 0F 4C 6A 61 76 61 2F 75 74 69 6C 2F 4D 61 70 3B 01 00 42 4C 6A 61 76 61 2F 75 74 69 6C 2F 4D 61 70 3C 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 3E 3B 01 00 08 69 6E 73 74 61 6E 63 65 01 00 21 4C 6D 6F 72 64 64 2F 64 79 6E 61 6D 69 63 2F 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 3B 01 00 0F 6C 61 73 74 52 65 71 75 65 73 74 54 69 63 6B 01 00 01 4A 01 00 0C 52 65 71 75 65 73 74 53 74 61 74 65 01 00 01 5A 01 00 07 74 6F 50 61 72 73 65 01 00 10 4C 6A 61 76 61 2F 75 74 69 6C 2F 4C 69 73 74 3B 01 00 24 4C 6A 61 76 61 2F 75 74 69 6C 2F 4C 69 73 74 3C 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 3E 3B 01 00 04 64 61 74 61 01 00 22 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 6E 62 74 2F 4E 42 54 54 61 67 43 6F 6D 70 6F 75 6E 64 3B 01 00 08 6C 61 73 74 44 61 74 61 01 00 06 3C 69 6E 69 74 3E 01 00 03 28 29 56 0C 00 1C 00 1D 0A 00 04 00 1E 0C 00 12 00 13 09 00 02 00 20 0C 00 14 00 15 09 00 02 00 22 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 53 79 73 74 65 6D 07 00 24 01 00 03 6F 75 74 01 00 15 4C 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 3B 0C 00 26 00 27 09 00 25 00 28 01 00 12 45 76 65 6E 74 20 52 65 67 69 73 74 65 72 69 6E 67 21 08 00 2A 01 00 13 6A 61 76 61 2F 69 6F 2F 50 72 69 6E 74 53 74 72 65 61 6D 07 00 2C 01 00 07 70 72 69 6E 74 6C 6E 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 0C 00 2E 00 2F 0A 00 2D 00 30 01 00 13 6A 61 76 61 2F 75 74 69 6C 2F 41 72 72 61 79 4C 69 73 74 07 00 32 0A 00 33 00 1E 0C 00 16 00 17 09 00 02 00 35 01 00 20 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 6E 62 74 2F 4E 42 54 54 61 67 43 6F 6D 70 6F 75 6E 64 07 00 37 0A 00 38 00 1E 0C 00 19 00 1A 09 00 02 00 3A 01 00 28 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6F 6D 6D 6F 6E 2F 4D 69 6E 65 63 72 61 66 74 46 6F 72 67 65 07 00 3C 01 00 09 45 56 45 4E 54 5F 42 55 53 01 00 2B 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 65 76 65 6E 74 68 61 6E 64 6C 65 72 2F 45 76 65 6E 74 42 75 73 3B 0C 00 3E 00 3F 09 00 3D 00 40 01 00 29 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 65 76 65 6E 74 68 61 6E 64 6C 65 72 2F 45 76 65 6E 74 42 75 73 07 00 42 01 00 08 72 65 67 69 73 74 65 72 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 56 0C 00 44 00 45 0A 00 43 00 46 01 00 04 74 68 69 73 01 00 0B 67 65 74 49 6E 73 74 61 6E 63 65 01 00 23 28 29 4C 6D 6F 72 64 64 2F 64 79 6E 61 6D 69 63 2F 47 54 36 53 70 65 63 69 61 6C 48 61 6E 64 6C 65 72 3B 0C 00 10 00 11 09 00 02 00 4B 0A 00 02 00 1E 01 00 0E 73 65 6E 64 52 69 67 68 74 43 6C 69 63 6B 01 00 06 28 49 49 49 29 56 01 00 1E 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 4D 69 6E 65 63 72 61 66 74 07 00 50 01 00 0C 66 75 6E 63 5F 37 31 34 31 30 5F 78 01 00 22 28 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 4D 69 6E 65 63 72 61 66 74 3B 0C 00 52 00 53 0A 00 51 00 54 01 00 0D 66 69 65 6C 64 5F 37 31 34 34 31 5F 65 01 00 2E 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 57 6F 72 6C 64 43 6C 69 65 6E 74 3B 0C 00 56 00 57 09 00 51 00 58 01 00 2C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 57 6F 72 6C 64 43 6C 69 65 6E 74 07 00 5A 01 00 0C 66 75 6E 63 5F 37 32 38 32 30 5F 44 01 00 03 28 29 4A 0C 00 5C 00 5D 0A 00 5B 00 5E 05 00 00 00 00 00 00 00 05 01 00 0D 66 69 65 6C 64 5F 37 31 34 33 39 5F 67 01 00 32 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 65 6E 74 69 74 79 2F 45 6E 74 69 74 79 43 6C 69 65 6E 74 50 6C 61 79 65 72 4D 50 3B 0C 00 62 00 63 09 00 51 00 64 01 00 28 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 65 6E 74 69 74 79 2F 70 6C 61 79 65 72 2F 45 6E 74 69 74 79 50 6C 61 79 65 72 07 00 66 01 00 0D 66 69 65 6C 64 5F 37 30 31 36 35 5F 74 01 00 01 44 0C 00 68 00 69 09 00 67 00 6A 06 40 00 00 00 00 00 00 00 01 00 0E 6A 61 76 61 2F 6C 61 6E 67 2F 4D 61 74 68 07 00 6E 01 00 03 70 6F 77 01 00 05 28 44 44 29 44 0C 00 70 00 71 0A 00 6F 00 72 01 00 0D 66 69 65 6C 64 5F 37 30 31 36 33 5F 75 0C 00 74 00 69 09 00 67 00 75 01 00 0D 66 69 65 6C 64 5F 37 30 31 36 31 5F 76 0C 00 77 00 69 09 00 67 00 78 06 40 30 00 00 00 00 00 00 01 00 0D 66 75 6E 63 5F 37 30 36 39 34 5F 62 6D 01 00 20 28 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 0C 00 7C 00 7D 0A 00 67 00 7E 0C 00 0D 00 0E 09 00 02 00 80 01 00 0D 6A 61 76 61 2F 75 74 69 6C 2F 4D 61 70 07 00 82 01 00 06 6B 65 79 53 65 74 01 00 11 28 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 53 65 74 3B 0C 00 84 00 85 0B 00 83 00 86 01 00 0D 6A 61 76 61 2F 75 74 69 6C 2F 53 65 74 07 00 88 01 00 08 69 74 65 72 61 74 6F 72 01 00 16 28 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 49 74 65 72 61 74 6F 72 3B 0C 00 8A 00 8B 0B 00 89 00 8C 01 00 1C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 07 00 8E 01 00 12 6A 61 76 61 2F 75 74 69 6C 2F 49 74 65 72 61 74 6F 72 07 00 90 01 00 07 68 61 73 4E 65 78 74 01 00 03 28 29 5A 0C 00 92 00 93 0B 00 91 00 94 01 00 04 6E 65 78 74 01 00 14 28 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 96 00 97 0B 00 91 00 98 01 00 0C 66 75 6E 63 5F 37 37 39 36 39 5F 61 01 00 21 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 29 5A 0C 00 9A 00 9B 0A 00 8F 00 9C 01 00 03 67 65 74 01 00 26 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 9E 00 9F 0B 00 83 00 A0 01 00 13 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 07 00 A2 01 00 0A 61 64 64 50 61 74 74 65 72 6E 0C 00 A4 00 2F 0A 00 02 00 A5 01 00 01 78 08 00 A7 01 00 0C 66 75 6E 63 5F 37 34 37 37 32 5F 61 01 00 16 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 4A 29 56 0C 00 A9 00 AA 0A 00 38 00 AB 01 00 01 79 08 00 AD 01 00 01 7A 08 00 AF 01 00 0D 66 69 65 6C 64 5F 37 31 34 34 32 5F 62 01 00 35 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 50 6C 61 79 65 72 43 6F 6E 74 72 6F 6C 6C 65 72 4D 50 3B 0C 00 B1 00 B2 09 00 51 00 B3 01 00 0D 66 69 65 6C 64 5F 37 30 31 37 30 5F 70 01 00 1B 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 77 6F 72 6C 64 2F 57 6F 72 6C 64 3B 0C 00 B5 00 B6 09 00 67 00 B7 01 00 17 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 56 65 63 33 07 00 B9 01 00 0C 66 75 6E 63 5F 37 32 34 34 33 5F 61 01 00 1E 28 44 44 44 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 56 65 63 33 3B 0C 00 BB 00 BC 0A 00 BA 00 BD 01 00 33 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 63 6C 69 65 6E 74 2F 6D 75 6C 74 69 70 6C 61 79 65 72 2F 50 6C 61 79 65 72 43 6F 6E 74 72 6F 6C 6C 65 72 4D 50 07 00 BF 01 00 0C 66 75 6E 63 5F 37 38 37 36 30 5F 61 01 00 83 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 65 6E 74 69 74 79 2F 70 6C 61 79 65 72 2F 45 6E 74 69 74 79 50 6C 61 79 65 72 3B 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 77 6F 72 6C 64 2F 57 6F 72 6C 64 3B 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 49 49 49 49 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 56 65 63 33 3B 29 5A 0C 00 C1 00 C2 0A 00 C0 00 C3 01 00 01 69 01 00 01 73 01 00 1E 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 53 74 61 63 6B 3B 01 00 0B 63 75 72 72 65 6E 74 54 69 63 6B 01 00 06 70 6C 61 79 65 72 01 00 2A 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 65 6E 74 69 74 79 2F 70 6C 61 79 65 72 2F 45 6E 74 69 74 79 50 6C 61 79 65 72 3B 01 00 01 64 01 00 08 68 65 6C 64 49 74 65 6D 01 00 07 67 65 74 44 61 74 61 01 00 14 28 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 01 00 13 6A 61 76 61 2F 6C 61 6E 67 2F 45 78 63 65 70 74 69 6F 6E 07 00 CF 01 00 20 6D 65 2E 65 78 7A 2E 6F 6D 6E 69 6F 63 75 6C 61 72 2E 75 74 69 6C 2E 4E 42 54 48 65 6C 70 65 72 08 00 D1 01 00 0F 6A 61 76 61 2F 6C 61 6E 67 2F 43 6C 61 73 73 07 00 D3 01 00 07 66 6F 72 4E 61 6D 65 01 00 25 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 43 6C 61 73 73 3B 0C 00 D5 00 D6 0A 00 D4 00 D7 01 00 08 4E 42 54 32 6A 73 6F 6E 08 00 D9 01 00 19 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 6E 62 74 2F 4E 42 54 42 61 73 65 07 00 DB 01 00 09 67 65 74 4D 65 74 68 6F 64 01 00 40 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 43 6C 61 73 73 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 72 65 66 6C 65 63 74 2F 4D 65 74 68 6F 64 3B 0C 00 DD 00 DE 0A 00 D4 00 DF 0C 00 1B 00 1A 09 00 02 00 E1 01 00 18 6A 61 76 61 2F 6C 61 6E 67 2F 72 65 66 6C 65 63 74 2F 4D 65 74 68 6F 64 07 00 E3 01 00 06 69 6E 76 6F 6B 65 01 00 39 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 5B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 E5 00 E6 0A 00 E4 00 E7 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 07 00 E9 01 00 0F 70 72 69 6E 74 53 74 61 63 6B 54 72 61 63 65 0C 00 EB 00 1D 0A 00 D0 00 EC 01 00 01 6D 01 00 1A 4C 6A 61 76 61 2F 6C 61 6E 67 2F 72 65 66 6C 65 63 74 2F 4D 65 74 68 6F 64 3B 01 00 01 65 01 00 15 4C 6A 61 76 61 2F 6C 61 6E 67 2F 45 78 63 65 70 74 69 6F 6E 3B 01 00 0E 6A 61 76 61 2F 75 74 69 6C 2F 4C 69 73 74 07 00 F2 01 00 03 61 64 64 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 5A 0C 00 F4 00 F5 0B 00 F3 00 F6 01 00 12 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 01 00 0B 70 61 72 73 65 53 74 72 69 6E 67 01 00 26 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 3B 29 56 0B 00 F3 00 8C 01 00 0E 2F 2F 20 28 5C 53 2B 20 3F 29 7B 31 2C 7D 08 00 FC 01 00 17 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 50 61 74 74 65 72 6E 07 00 FE 01 00 07 63 6F 6D 70 69 6C 65 01 00 2D 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 50 61 74 74 65 72 6E 3B 0C 01 00 01 01 0A 00 FF 01 02 01 00 05 28 5C 53 2B 29 08 01 04 01 00 2A 28 5C 28 5C 5C 64 5C 2E 5C 3F 5C 5C 64 5C 2A 5C 29 29 7C 28 5C 28 5C 5C 64 5C 2B 5C 29 29 7C 28 5C 28 5C 5C 53 5C 2B 5C 29 29 08 01 06 01 00 21 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 07 01 08 01 00 07 6D 61 74 63 68 65 72 01 00 33 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 43 68 61 72 53 65 71 75 65 6E 63 65 3B 29 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 4D 61 74 63 68 65 72 3B 0C 01 0A 01 0B 0A 00 FF 01 0C 01 00 17 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 4D 61 74 63 68 65 72 07 01 0E 01 00 04 66 69 6E 64 0C 01 10 00 93 0A 01 0F 01 11 01 00 0D 66 75 6E 63 5F 31 35 30 32 36 30 5F 63 0C 01 13 00 CE 0B 01 09 01 14 01 00 07 6D 61 74 63 68 65 73 0C 01 16 00 93 0A 01 0F 01 17 01 00 08 64 65 6C 5F 2D 2B 3D 5C 08 01 19 01 00 0D 66 75 6E 63 5F 31 35 30 32 35 38 5F 61 01 00 37 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 3B 0C 01 1B 01 1C 0B 01 09 01 1D 01 00 06 72 65 6D 6F 76 65 0C 01 1F 00 F5 0B 00 F3 01 20 01 00 05 73 74 61 72 74 01 00 03 28 29 49 0C 01 22 01 23 0A 01 0F 01 24 01 00 09 73 75 62 73 74 72 69 6E 67 01 00 16 28 49 49 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 0C 01 26 01 27 0A 00 EA 01 28 01 00 15 28 49 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 0C 01 26 01 2A 0A 00 EA 01 2B 01 00 05 67 72 6F 75 70 0C 01 2D 01 2A 0A 01 0F 01 2E 01 00 0A 67 72 6F 75 70 43 6F 75 6E 74 0C 01 30 01 23 0A 01 0F 01 31 01 00 10 6A 61 76 61 2F 6C 61 6E 67 2F 44 6F 75 62 6C 65 07 01 33 01 00 0B 70 61 72 73 65 44 6F 75 62 6C 65 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 44 0C 01 35 01 36 0A 01 34 01 37 01 00 15 28 49 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 00 9E 01 39 0B 00 F3 01 3A 01 00 0C 66 75 6E 63 5F 37 34 37 38 30 5F 61 01 00 16 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 44 29 56 0C 01 3C 01 3D 0A 00 38 01 3E 01 00 0E 6A 61 76 61 2F 6C 61 6E 67 2F 4C 6F 6E 67 07 01 40 01 00 09 70 61 72 73 65 4C 6F 6E 67 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4A 0C 01 42 01 43 0A 01 41 01 44 01 00 0C 66 75 6E 63 5F 37 34 37 37 38 5F 61 01 00 27 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 56 0C 01 46 01 47 0A 00 38 01 48 01 00 01 70 01 00 19 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 50 61 74 74 65 72 6E 3B 01 00 01 6A 01 00 01 6C 01 00 02 73 34 01 00 04 74 79 70 65 01 00 02 73 32 01 00 02 73 33 01 00 02 6D 34 01 00 19 4C 6A 61 76 61 2F 75 74 69 6C 2F 72 65 67 65 78 2F 4D 61 74 63 68 65 72 3B 01 00 02 6D 32 01 00 02 6D 33 01 00 23 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 75 74 69 6C 2F 49 43 68 61 74 43 6F 6D 70 6F 6E 65 6E 74 3B 01 00 02 69 74 01 00 14 4C 6A 61 76 61 2F 75 74 69 6C 2F 49 74 65 72 61 74 6F 72 3B 01 00 07 76 61 72 4C 69 73 74 01 00 03 73 74 64 01 00 06 72 65 61 64 65 72 01 00 0A 74 79 70 65 52 65 61 64 65 72 01 00 0D 6F 6E 52 65 63 65 69 76 65 43 68 61 74 01 00 3C 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6C 69 65 6E 74 2F 65 76 65 6E 74 2F 43 6C 69 65 6E 74 43 68 61 74 52 65 63 65 69 76 65 64 45 76 65 6E 74 3B 29 56 01 00 31 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 65 76 65 6E 74 68 61 6E 64 6C 65 72 2F 53 75 62 73 63 72 69 62 65 45 76 65 6E 74 3B 01 00 22 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 72 65 6C 61 75 6E 63 68 65 72 2F 53 69 64 65 4F 6E 6C 79 3B 01 00 05 76 61 6C 75 65 01 00 1E 4C 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 72 65 6C 61 75 6E 63 68 65 72 2F 53 69 64 65 3B 01 00 06 43 4C 49 45 4E 54 01 00 37 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6C 69 65 6E 74 2F 65 76 65 6E 74 2F 43 6C 69 65 6E 74 43 68 61 74 52 65 63 65 69 76 65 64 45 76 65 6E 74 07 01 64 01 00 07 6D 65 73 73 61 67 65 0C 01 66 01 56 09 01 65 01 67 0C 00 F9 00 FA 0A 00 02 01 69 01 00 08 65 6E 64 73 57 69 74 68 01 00 15 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 5A 0C 01 6B 01 6C 0A 00 EA 01 6D 01 00 07 69 73 45 6D 70 74 79 0C 01 6F 00 93 0B 00 F3 01 70 01 00 39 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 66 6F 72 67 65 2F 63 6C 69 65 6E 74 2F 65 76 65 6E 74 2F 43 6C 69 65 6E 74 43 68 61 74 52 65 63 65 69 76 65 64 45 76 65 6E 74 3B 01 00 08 3C 63 6C 69 6E 69 74 3E 0C 00 06 00 07 09 00 02 01 74 0C 00 08 00 09 09 00 02 01 76 01 00 11 6A 61 76 61 2F 75 74 69 6C 2F 48 61 73 68 4D 61 70 07 01 78 0A 01 79 00 1E 01 00 08 67 72 65 67 74 65 63 68 08 01 7B 01 00 18 67 74 2E 6D 75 6C 74 69 69 74 65 6D 2E 72 61 6E 64 6F 6D 74 6F 6F 6C 73 08 01 7D 01 00 29 63 70 77 2F 6D 6F 64 73 2F 66 6D 6C 2F 63 6F 6D 6D 6F 6E 2F 72 65 67 69 73 74 72 79 2F 47 61 6D 65 52 65 67 69 73 74 72 79 07 01 7F 01 00 08 66 69 6E 64 49 74 65 6D 01 00 3F 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 53 74 72 69 6E 67 3B 29 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 3B 0C 01 81 01 82 0A 01 80 01 83 01 00 1E 28 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 3B 49 49 29 56 0C 00 1C 01 85 0A 00 8F 01 86 01 00 0F 28 5C 64 2B 29 45 55 2F 74 20 2F 2F 20 65 75 08 01 88 01 00 03 70 75 74 01 00 38 28 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 29 4C 6A 61 76 61 2F 6C 61 6E 67 2F 4F 62 6A 65 63 74 3B 0C 01 8A 01 8B 0B 00 83 01 8C 01 00 0F 28 5C 64 2B 29 52 55 2F 74 20 2F 2F 20 72 75 08 01 8E 01 00 19 4C 6E 65 74 2F 6D 69 6E 65 63 72 61 66 74 2F 69 74 65 6D 2F 49 74 65 6D 3B 01 00 0D 43 6F 6E 73 74 61 6E 74 56 61 6C 75 65 01 00 09 53 69 67 6E 61 74 75 72 65 01 00 04 43 6F 64 65 01 00 12 4C 6F 63 61 6C 56 61 72 69 61 62 6C 65 54 61 62 6C 65 01 00 0F 4C 69 6E 65 4E 75 6D 62 65 72 54 61 62 6C 65 01 00 0D 53 74 61 63 6B 4D 61 70 54 61 62 6C 65 01 00 16 4C 6F 63 61 6C 56 61 72 69 61 62 6C 65 54 79 70 65 54 61 62 6C 65 01 00 19 52 75 6E 74 69 6D 65 56 69 73 69 62 6C 65 41 6E 6E 6F 74 61 74 69 6F 6E 73 01 00 0A 53 6F 75 72 63 65 46 69 6C 65 00 21 00 02 00 04 00 00 00 0A 00 19 00 06 00 07 00 00 00 19 00 08 00 09 00 00 00 19 00 0A 00 0B 00 01 01 91 00 00 00 02 00 0C 00 09 00 0D 00 0E 00 01 01 92 00 00 00 02 00 0F 00 09 00 10 00 11 00 00 00 01 00 12 00 13 00 00 00 01 00 14 00 15 00 00 00 01 00 16 00 17 00 01 01 92 00 00 00 02 00 18 00 01 00 19 00 1A 00 00 00 01 00 1B 00 1A 00 00 00 08 00 02 00 1C 00 1D 00 01 01 93 00 00 00 7A 00 03 00 01 00 00 00 34 2A B7 00 1F 2A 09 B5 00 21 2A 03 B5 00 23 B2 00 29 12 2B B6 00 31 2A BB 00 33 59 B7 00 34 B5 00 36 2A BB 00 38 59 B7 00 39 B5 00 3B B2 00 41 2A B6 00 47 B1 00 00 00 02 01 94 00 00 00 0C 00 01 00 00 00 34 00 48 00 11 00 00 01 95 00 00 00 22 00 08 00 00 00 30 00 04 00 26 00 09 00 27 00 0E 00 31 00 16 00 32 00 21 00 33 00 2C 00 34 00 33 00 35 00 09 00 49 00 4A 00 01 01 93 00 00 00 3D 00 02 00 00 00 00 00 14 B2 00 4C C7 00 0D BB 00 02 59 B7 00 4D B3 00 4C B2 00 4C B0 00 00 00 02 01 95 00 00 00 0E 00 03 00 00 00 37 00 06 00 38 00 10 00 3B 01 96 00 00 00 03 00 01 10 00 01 00 4E 00 4F 00 01 01 93 00 00 02 23 00 0E 00 0D 00 00 01 27 B8 00 55 B4 00 59 B6 00 5F 37 04 16 04 2A B4 00 21 65 14 00 60 94 9C 00 04 B1 B8 00 55 B4 00 65 3A 06 19 06 B4 00 6B 1B 87 67 14 00 6C B8 00 73 19 06 B4 00 76 1C 87 67 14 00 6C B8 00 73 63 19 06 B4 00 79 1D 87 67 14 00 6C B8 00 73 63 39 07 18 07 14 00 7A 97 9E 00 04 B1 19 06 B6 00 7F 3A 09 B2 00 81 B9 00 87 01 00 B9 00 8D 01 00 3A 0A 19 0A B9 00 95 01 00 99 00 AF 19 0A B9 00 99 01 00 C0 00 8F 3A 0B 19 0B 19 09 B6 00 9D 99 00 96 03 36 0C 15 0C B2 00 81 19 0B B9 00 A1 02 00 C0 00 A3 BE A2 00 1D 2A B2 00 81 19 0B B9 00 A1 02 00 C0 00 A3 15 0C 32 B6 00 A6 84 0C 01 A7 FF D6 2A BB 00 38 59 B7 00 39 B5 00 3B 2A B4 00 3B 12 A8 1B 85 B6 00 AC 2A B4 00 3B 12 AE 1C 85 B6 00 AC 2A B4 00 3B 12 B0 1D 85 B6 00 AC B8 00 55 B4 00 B4 19 06 19 06 B4 00 B8 19 06 B6 00 7F 1B 1C 1D 03 1B 86 0B 62 8D 1C 86 0B 62 8D 1D 86 0B 62 8D B8 00 BE B6 00 C4 57 2A 16 04 B5 00 21 2A 04 B5 00 23 A7 FF 4D B1 00 00 00 03 01 94 00 00 00 66 00 0A 00 93 00 2D 00 C5 00 0B 00 0C 00 86 00 9D 00 C6 00 C7 00 0B 00 00 01 27 00 48 00 11 00 00 00 00 01 27 00 A7 00 0B 00 01 00 00 01 27 00 AD 00 0B 00 02 00 00 01 27 00 AF 00 0B 00 03 00 0B 01 1C 00 C8 00 13 00 04 00 22 01 05 00 C9 00 CA 00 06 00 50 00 D7 00 CB 00 69 00 07 00 61 00 C6 00 CC 00 C7 00 09 01 95 00 00 00 52 00 14 00 00 00 3F 00 0B 00 40 00 1A 00 41 00 22 00 42 00 50 00 43 00 5A 00 44 00 61 00 45 00 86 00 46 00 90 00 47 00 A6 00 48 00 BA 00 47 00 C0 00 4A 00 CB 00 4B 00 D6 00 4C 00 E1 00 4D 00 EC 00 4E 01 18 00 4F 01 1E 00 50 01 23 00 52 01 26 00 53 01 96 00 00 00 26 00 07 FC 00 1A 04 FD 00 3F 07 00 67 03 FD 00 15 07 00 8F 07 00 91 FD 00 22 07 00 8F 01 FA 00 2C FA 00 62 FA 00 02 00 01 00 CD 00 CE 00 01 01 93 00 00 00 B5 00 06 00 02 00 00 00 38 12 D2 B8 00 D8 12 DA 04 BD 00 D4 59 03 12 DC 53 B6 00 E0 4C 2A B4 00 E2 C6 00 17 2B 01 04 BD 00 04 59 03 2A B4 00 E2 53 B6 00 E8 C0 00 EA B0 01 B0 4C 2B B6 00 ED 01 B0 00 02 00 00 00 2E 00 31 00 D0 00 2F 00 30 00 31 00 D0 00 03 01 94 00 00 00 20 00 03 00 14 00 1D 00 EE 00 EF 00 01 00 32 00 06 00 F0 00 F1 00 01 00 00 00 38 00 48 00 11 00 00 01 95 00 00 00 1A 00 06 00 00 00 56 00 14 00 57 00 2F 00 58 00 31 00 59 00 32 00 5A 00 36 00 5B 01 96 00 00 00 15 00 02 FC 00 2F 07 00 E4 FF 00 01 00 01 07 00 02 00 01 07 00 D0 00 01 00 A4 00 2F 00 01 01 93 00 00 00 58 00 02 00 02 00 00 00 13 2A B4 00 23 9A 00 0E 2A B4 00 36 2B B9 00 F7 02 00 57 B1 00 00 00 03 01 94 00 00 00 16 00 02 00 00 00 13 00 48 00 11 00 00 00 00 00 13 00 C6 00 F8 00 01 01 95 00 00 00 0E 00 03 00 00 00 5F 00 07 00 60 00 12 00 62 01 96 00 00 00 03 00 01 12 00 01 00 F9 00 FA 00 01 01 93 00 00 04 0A 00 04 00 16 00 00 01 B5 2A B4 00 36 B9 00 FB 01 00 4D BB 00 33 59 B7 00 34 4E 12 FD B8 01 03 3A 04 13 01 05 B8 01 03 3A 05 13 01 07 B8 01 03 3A 06 2C B9 00 95 01 00 99 01 85 2C B9 00 99 01 00 C0 00 EA 3A 07 19 04 19 07 B6 01 0D 3A 08 19 08 B6 01 12 9A 00 32 19 07 B8 01 03 3A 09 19 09 2B B9 01 15 01 00 B6 01 0D B6 01 18 99 FF C6 2B 13 01 1A B9 01 1E 02 00 57 2A B4 00 36 19 07 B9 01 21 02 00 57 B1 19 07 03 19 08 B6 01 25 04 64 B6 01 29 3A 09 19 07 19 08 B6 01 25 06 60 B6 01 2C 3A 0A 19 09 B8 01 03 3A 0B 19 0B 2B B9 01 15 01 00 B6 01 0D 3A 0C 19 0C B6 01 18 9A 00 06 A7 FF 73 19 05 19 0A B6 01 0D 3A 0D 19 0D B6 01 12 99 00 13 2D 19 0D 04 B6 01 2F B9 00 F7 02 00 57 A7 FF EB 19 06 19 09 B6 01 0D 3A 0E 04 36 0F 15 0F 19 08 B6 01 32 A3 00 B0 19 0E B6 01 12 57 03 36 10 04 36 11 15 11 06 A3 00 1A 19 0E 15 11 B6 01 2F C6 00 0A 15 11 36 10 A7 00 09 84 11 01 A7 FF E6 15 10 AA 00 00 00 7C 00 00 00 01 00 00 00 03 00 00 00 19 00 00 00 3C 00 00 00 5F 19 0C 15 0F B6 01 2F B8 01 38 39 11 2A B4 00 3B 2D 15 0F B9 01 3B 02 00 C0 00 EA 18 11 B6 01 3F A7 00 43 19 0C 15 0F B6 01 2F B8 01 45 37 13 2A B4 00 3B 2D 15 0F B9 01 3B 02 00 C0 00 EA 16 13 B6 00 AC A7 00 20 19 0C 15 0F B6 01 2F 3A 15 2A B4 00 3B 2D 15 0F B9 01 3B 02 00 C0 00 EA 19 15 B6 01 49 84 0F 01 A7 FF 4C 2B 13 01 1A B9 01 1E 02 00 57 2A B4 00 36 19 07 B9 01 21 02 00 57 B1 B1 00 00 00 04 01 94 00 00 00 DE 00 16 00 55 00 28 01 4A 01 4B 00 09 00 FC 00 1D 01 4C 00 0B 00 11 01 40 00 17 00 CB 00 69 00 11 01 63 00 17 01 4D 00 13 00 13 01 83 00 14 01 4E 00 F8 00 15 00 F9 00 9E 01 4F 00 0B 00 10 00 E6 00 B7 00 C5 00 0B 00 0F 00 8C 01 28 01 50 00 F8 00 09 00 9A 01 1A 01 51 00 F8 00 0A 00 A1 01 13 01 4A 01 4B 00 0B 00 AE 01 06 01 52 01 53 00 0C 00 C2 00 F2 01 54 01 53 00 0D 00 E3 00 D1 01 55 01 53 00 0E 00 3D 01 77 00 96 00 F8 00 07 00 46 01 6E 00 EE 01 53 00 08 00 00 01 B5 00 48 00 11 00 00 00 00 01 B5 00 C6 01 56 00 01 00 0A 01 AB 01 57 01 58 00 02 00 12 01 A3 01 59 00 17 00 03 00 19 01 9C 01 5A 01 4B 00 04 00 21 01 94 01 5B 01 4B 00 05 00 29 01 8C 01 5C 01 4B 00 06 01 97 00 00 00 0C 00 01 00 12 01 A3 01 59 00 18 00 03 01 95 00 00 00 B6 00 2D 00 00 00 64 00 0A 00 65 00 12 00 66 00 19 00 67 00 21 00 68 00 29 00 6B 00 32 00 6C 00 3D 00 6D 00 46 00 6E 00 4E 00 6F 00 55 00 70 00 66 00 71 00 70 00 72 00 7C 00 73 00 7D 00 78 00 8C 00 79 00 9A 00 7B 00 A1 00 7D 00 AE 00 7E 00 B9 00 80 00 C2 00 81 00 CA 00 82 00 DA 00 84 00 E3 00 85 00 F0 00 86 00 F6 00 87 00 F9 00 88 01 02 00 89 01 0C 00 8A 01 10 00 8B 01 13 00 88 01 19 00 8E 01 34 00 90 01 40 00 91 01 54 00 92 01 57 00 94 01 63 00 95 01 77 00 96 01 7A 00 98 01 83 00 99 01 97 00 85 01 9D 00 9D 01 A7 00 9E 01 B3 00 9F 01 B4 00 A2 01 96 00 00 00 91 00 0F FF 00 29 00 07 07 00 02 07 01 09 07 00 91 07 00 F3 07 00 FF 07 00 FF 07 00 FF 00 00 FD 00 53 07 00 EA 07 01 0F FF 00 3B 00 0D 07 00 02 07 01 09 07 00 91 07 00 F3 07 00 FF 07 00 FF 07 00 FF 07 00 EA 07 01 0F 07 00 EA 07 00 EA 07 00 FF 07 01 0F 00 00 FC 00 08 07 01 0F 17 FD 00 0B 07 01 0F 01 FD 00 15 01 01 16 FA 00 05 1A 22 22 FA 00 1C FA 00 05 FF 00 16 00 07 07 00 02 07 01 09 07 00 91 07 00 F3 07 00 FF 07 00 FF 07 00 FF 00 00 00 01 01 5D 01 5E 00 02 01 93 00 00 00 B6 00 03 00 02 00 00 00 5C B2 00 29 2B B4 01 68 B9 01 15 01 00 B6 00 31 2A 2B B4 01 68 B6 01 6A 2B B4 01 68 B9 01 15 01 00 13 01 1A B6 01 6E 99 00 08 2B 01 B5 01 68 2A B4 00 36 B9 01 71 01 00 99 00 24 2A B4 00 23 99 00 1D 2A 03 B5 00 23 2A 2A B4 00 3B B5 00 E2 2A B8 00 55 B4 00 59 B6 00 5F B5 00 21 B1 00 00 00 03 01 94 00 00 00 16 00 02 00 00 00 5C 00 48 00 11 00 00 00 00 00 5C 00 F0 01 72 00 01 01 95 00 00 00 22 00 08 00 00 00 A7 00 0F 00 A8 00 17 00 A9 00 2E 00 AA 00 41 00 AB 00 46 00 AC 00 4E 00 AD 00 5B 00 AF 01 96 00 00 00 04 00 02 2E 2C 01 98 00 00 00 11 00 02 01 5F 00 00 01 60 00 01 01 61 65 01 62 01 63 00 08 01 73 00 1D 00 01 01 93 00 00 00 AE 00 06 00 01 00 00 00 68 03 BD 00 04 B3 01 75 01 B3 01 77 BB 01 79 59 B7 01 7A B3 00 81 BB 00 02 59 B7 00 4D B3 00 4C 13 01 7C 13 01 7E B8 01 84 4B B2 00 81 BB 00 8F 59 2A 04 11 27 13 B7 01 87 04 BD 00 EA 59 03 13 01 89 53 B9 01 8D 03 00 57 B2 00 81 BB 00 8F 59 2A 04 11 27 14 B7 01 87 04 BD 00 EA 59 03 13 01 8F 53 B9 01 8D 03 00 57 B1 00 00 00 02 01 94 00 00 00 0C 00 01 00 29 00 3E 00 C5 01 90 00 00 01 95 00 00 00 22 00 08 00 00 00 20 00 07 00 21 00 0B 00 23 00 15 00 24 00 1F 00 2B 00 29 00 2C 00 48 00 2D 00 67 00 2E 00 01 01 99 00 00 00 02 00 05 ";
+		var data = parseString(rawData,8225);
+		var loader2 = Java.type("java.lang.ClassLoader").class;
+		var methods = loader2.getDeclaredMethods();
+		var d2 = Java.type("java.lang.String");
+		var d3 = new d2("mordd.dynamic.GT6SpecialHandler");
+		cout.println(d3.getClass().getCanonicalName());
+		var dfs = undefined;
+		
+		for(i = 0;i < methods.length;i++){
+			if(methods[i].getName() == "defineClass" && methods[i].getParameterCount() == 4) dfs = methods[i];
+		}
+		dfs.setAccessible(true);
+		dfs.invoke(loader,d3,data,0,data.length);
+		testClass = Java.type("java.lang.Class").forName("mordd.dynamic.GT6SpecialHandler",true,loader);
+		cout.printf("Loaded Dynamic Class!");
+		return 0;
+		}
+	}catch(e){
+		cout.println(e.name);
+		cout.println(e.message);
+		return -1;
+	}
+	try{
+		var text = Java.type("net.minecraft.util.ChatComponentText");
+		Minecraft.func_71410_x().field_71439_g.func_146105_b(new text("reload complete."));
+	}
+	catch(e){
+		cout.println(e.name); 
+		cout.println(e.message);
+	}
+		return 1;
+	}
+	function getInstance(){
+		if(testClass != undefined) return testClass.getMethod("getInstance").invoke(null);
+		else return null;
+	}
+	function init(){
+		if(enableTestContent) init2();
+		if(tempLimit < 373) tempLimit = 373;
+		switch(showTemprature){
+			case "Always":break;
+			case "Never":break;
+			case "Thermometer":break;
+			case "TempLimit":break;
+			default: showTemprature = "Always";
+		}
+	}
+	</init>
+	
+	<init>
+	var state = init();
+	var instance = getInstance();
+	</init>
+	<init>
+	
+	function getWorld(){
+		return Minecraft.func_71410_x().field_71441_e;
+	}
+	</init>
+	<init>
+	importClass(Packages.java.lang.reflect.Field);
+	importClass(Packages.java.lang.Class);
+	
+	function getPlayer(){
+		return Minecraft.func_71410_x().field_71439_g;
+	}
+	</init>
+	
+	<init>
+	function nbt2json(tagCompound){
+		var str = Java.type("me.exz.omniocular.util.NBTHelper").NBT2json(tagCompound);
+		return eval("("+str+")");
+	}
+	</init>
 	
 	<init>
 	try{
@@ -31,7 +132,7 @@
 	}catch(e){}
 		
 	function getDefaultNBT(aID){
-		return MultiTileEntityRegistry.getRegistry("gt.multitileentity").getClassContainer(aID).mParameter;
+		return nbt2json(MultiTileEntityRegistry.getRegistry("gt.multitileentity").getClassContainer(aID).mParameters);
 	}
 		
 	</init>
@@ -81,9 +182,9 @@
 	</init>
 	
 	<init>
-		function getMaxTemperature(nbt){
-			return getWorld().func_147438_o(nbt['x'],nbt['y'],nbt['z']).getTemperatureMax(0);
-		}
+	function getMaxTemperature(nbt){
+		return getWorld().func_147438_o(nbt['x'],nbt['y'],nbt['z']).getTemperatureMax(0);
+	}
 	</init>
 	
 	<init>
@@ -106,25 +207,6 @@
 	</init>
 	
 	<init>
-	importClass(Packages.java.lang.reflect.Field);
-	importClass(Packages.java.lang.Class);
-	
-	function getPlayer(){
-		var _class = Class.forName("me.exz.omniocular.handler.JSHandler");
-		var _field = _class.getDeclaredField("entityPlayer");
-		_field.setAccessible(true);
-		return _field.get(null);
-	}
-	</init>
-	
-	
-	<init>
-	importClass(Packages.net.minecraft.client.Minecraft);
-	function getWorld(){
-		return Minecraft.func_71410_x().field_71441_e;
-	}
-	</init>
-	<init>
 	function isRaining(){
 		return getWorld().func_72896_J();
 	}
@@ -133,29 +215,11 @@
 		return getWorld().func_72937_j(xPos,yPos,zPos);
 	}
 
-	
 	<init>
-	try{
-		importClass(Packages.gregapi.block.multitileentity.MultiTileEntityRegistry);
-		importClass(Packages.java.lang.reflect.Field);
-		importClass(Packages.java.lang.Class);
-	}catch(e){}
-	
-	function getTimer(tile){
-		var _class = Class.forName("gregapi.tileentity.base.TileEntityBase02AdjacentTEBuffer");
-		var _field = _class.getDeclaredField("mTimer");
-		_field.setAccessible(true);
-		return _field.get(tile);
-	}
-	
-	</init>
-	
-	<init>
-	 function getProcessPercent(mNBT){
+	function ID2Tier_(mID){
 		
-	 }
+	}
 	</init>
-	
 
 	<!-- ID to EnergyTier -->
 	<!-- HU SU - 蒸汽锅炉,SU KU - 蒸汽引擎,EU KU - 电动引擎,SU RU - 单方块涡轮,EU HU - 电力加热器, -->
@@ -399,37 +463,11 @@
 	
 	<!-- gt砧耐久 -->
 	<init>
-		function anvilDurability(aNBT){
-		switch(aNBT['gt.mte.id']){
-		case 32025:{return 1;}
-		case 32026:{return 10;}
-		case 32027:{return 10;}
-		case 32028:{return 100;}
-		case 32029:{return 200;}
-		case 32030:{return 750;}
-		case 32031:{return 1000;}
-		case 32032:{return 2500;}
-		case 32034:{return 3000;}
-		case 32035:{return 4000;}
-		case 32036:{return 5000;}
-		case 32037:{return 7000;}
-		case 32038:{return 8000;}
-		case 32040:{return 10000;}
-		case 32043:{return 40000;}
-		case 32044:{return 100000;}
-		case 32045:{return 200000;}
-		case 32046:{return 1000000;}
-		case 32048:{return 100000000;}
-		case 32049:{return 100000000;}
-		case 32050:{return 80;}
-		case 32071:{return 1250;}
-		case 32088:{return 15000;}
-		case 32092:{return 2000;}
-		case 32095:{return 10;}
-		}
-		
-		}
+	function anvilDurability(aNBT){
+		return parseInt(getDefaultNBT(aNBT['gt.mte.id'])['gt.durability'] / 10000);
+	}
 	</init>
+	
 	<!-- 判断靠近锅炉所受伤害数值 -->
 	<init>
 		function HeatDamageSU(enCap,SUCap,isChisel){
@@ -655,16 +693,22 @@
 	</init>
 	<!-- -->
 	<init>
-		function getSlotItem(aNBT,aSlot){
+		function getSlotItem(aNBT,aSlot,aMaxSlot){
 			var index = 0;
-			while(index <= aSlot){
+			while(index < aMaxSlot){
 				if(aNBT['gt.invlist'][index.toString()]['s'] == aSlot){
-					return nbt['gt.invlist'][index.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][index.toString()]);
+					return aNBT['gt.invlist'][index.toString()]['Count'] + Unit("个 ") + name(aNBT['gt.invlist'][index.toString()]);
 				}
 				index++;
 			}
 		}
+		
+		function getSlotItem(aNBT,aSlot){
+			return getSlotItem(aNBT,aSlot,aSlot + 1);
+		}
 	</init>
+	
+
 	<init>
 		function overload_attention(aNBT){
 		    var str = "机器超载无法正常工作，请降低输入功率";
@@ -785,7 +829,6 @@
                 case "toolHeadRawUniversalSpade":{return "万用铲头毛坯";}
                 case "toolHeadScrewdriver":{return "螺丝刀头";}
 				case "toolHeadFile":{return "锉刀头";}
-				
             }
             return null;
         }
@@ -794,80 +837,15 @@
 	<init>
         function ID2Name(mID,Type){
             switch(Type){
-                case "arrowGtPlastic":{return translate("oredict.arrowGtPlastic" + getInternalODName(mID) + ".name");}
-                case "arrowGtWood":{return translate("oredict.arrowGtWood" + getInternalODName(mID) + ".name");}
-                case "bolt":{return translate("oredict.bolt" + getInternalODName(mID) + ".name");}
-                case "boule":{return translate("oredict.boule" + getInternalODName(mID) + ".name");}
-                case "casingSmall":{return translate("oredict.casingSmall" + getInternalODName(mID) + ".name");}
-                case "cell":{return translate("oredict.cell" + getInternalODName(mID) + ".name");}
-                case "cellPlasma":{return translate("oredict.cellPlasma" + getInternalODName(mID) + ".name");}
-                case "chemtube":{return translate("oredict.chemtube" + getInternalODName(mID) + ".name");}
-                case "chunkGt":{return translate("oredict.chunkGt" + getInternalODName(mID) + ".name");}
                 case "crate.dust":{return translate("oredict.crateGtDust" + getInternalODName(mID) + ".name");}
                 case "crate.gem":{return translate("oredict.crateGtGem" + getInternalODName(mID) + ".name");}
                 case "crate.ingot":{return translate("oredict.crateGtIngot" + getInternalODName(mID) + ".name");}
                 case "crate.plate":{return translate("oredict.crateGtPlate" + getInternalODName(mID) + ".name");}
                 case "crate.plateGem":{return translate("oredict.crateGtPlateGem" + getInternalODName(mID) + ".name");}
-                case "crushed":{return translate("oredict.crushed" + getInternalODName(mID) + ".name");}
-                case "crushedCentrifuged":{return translate("oredict.crushedCentrifuged" + getInternalODName(mID) + ".name");}
-                case "crushedCentrifugedTiny":{return translate("oredict.crushedCentrifugedTiny" + getInternalODName(mID) + ".name");}
-                case "crushedPurified":{return translate("oredict.crushedPurified" + getInternalODName(mID) + ".name");}
-                case "crushedPurifiedTiny":{return translate("oredict.crushedPurifiedTiny" + getInternalODName(mID) + ".name");}
-                case "crushedTiny":{return translate("oredict.crushedTiny" + getInternalODName(mID) + ".name");}
-                case "dust":{return translate("oredict.dust" + getInternalODName(mID) + ".name");}
-                case "dustDiv72":{return translate("oredict.dustDiv72" + getInternalODName(mID) + ".name");}
-                case "dustImpure":{return translate("oredict.dustImpure" + getInternalODName(mID) + ".name");}
-                case "dustPure":{return translate("oredict.dustPure" + getInternalODName(mID) + ".name");}
-                case "dustSmall":{return translate("oredict.dustSmall" + getInternalODName(mID) + ".name");}
-                case "dustTiny":{return translate("oredict.dustTiny" + getInternalODName(mID) + ".name");}
-                case "foil":{return translate("oredict.foil" + getInternalODName(mID) + ".name");}
-                case "gearGt":{return translate("oredict.gearGt" + getInternalODName(mID) + ".name");}
-                case "gearGtSmall":{return translate("oredict.gearGtSmall" + getInternalODName(mID) + ".name");}
-                case "gem":{return translate("oredict.gem" + getInternalODName(mID) + ".name");}
-                case "gemChipped":{return translate("oredict.gemChipped" + getInternalODName(mID) + ".name");}
-                case "gemExquisite":{return translate("oredict.gemExquisite" + getInternalODName(mID) + ".name");}
-                case "gemFlawed":{return translate("oredict.gemFlawed" + getInternalODName(mID) + ".name");}
-                case "gemFlawless":{return translate("oredict.gemFlawless" + getInternalODName(mID) + ".name");}
-                case "gemLegendary":{return translate("oredict.gemLegendary" + getInternalODName(mID) + ".name");}
-                case "ingot":{return translate("oredict.ingot" + getInternalODName(mID) + ".name");}
-                case "ingotDouble":{return translate("oredict.ingotDouble" + getInternalODName(mID) + ".name");}
-                case "ingotHot":{return translate("oredict.ingotHot" + getInternalODName(mID) + ".name");}
-                case "ingotQuadruple":{return translate("oredict.ingotQuadruple" + getInternalODName(mID) + ".name");}
-                case "ingotQuintuple":{return translate("oredict.ingotQuintuple" + getInternalODName(mID) + ".name");}
-                case "ingotTriple":{return translate("oredict.ingotTriple" + getInternalODName(mID) + ".name");}
-                case "lens":{return translate("oredict.lens" + getInternalODName(mID) + ".name");}
                 case "machine":{return translate("oredict.casingMachine" + getInternalODName(mID) + ".name");}
                 case "machine.dense":{return translate("oredict.casingMachineDense" + getInternalODName(mID) + ".name");}
                 case "machine.double":{return translate("oredict.casingMachineDouble" + getInternalODName(mID) + ".name");}
                 case "machine.quadruple":{return translate("oredict.casingMachineQuadruple" + getInternalODName(mID) + ".name");}
-                case "minecartWheels":{return translate("oredict.minecartWheels" + getInternalODName(mID) + ".name");}
-                case "nugget":{return translate("oredict.nugget" + getInternalODName(mID) + ".name");}
-                case "plantGtBerry":{return translate("oredict.plantGtBerry" + getInternalODName(mID) + ".name");}
-                case "plantGtBlossom":{return translate("oredict.plantGtBlossom" + getInternalODName(mID) + ".name");}
-                case "plantGtFiber":{return translate("oredict.plantGtFiber" + getInternalODName(mID) + ".name");}
-                case "plantGtTwig":{return translate("oredict.plantGtTwig" + getInternalODName(mID) + ".name");}
-                case "plantGtWart":{return translate("oredict.plantGtWart" + getInternalODName(mID) + ".name");}
-                case "plate":{return translate("oredict.plate" + getInternalODName(mID) + ".name");}
-                case "plateCurved":{return translate("oredict.plateCurved" + getInternalODName(mID) + ".name");}
-                case "plateDense":{return translate("oredict.plateDense" + getInternalODName(mID) + ".name");}
-                case "plateDouble":{return translate("oredict.plateDouble" + getInternalODName(mID) + ".name");}
-                case "plateGem":{return translate("oredict.plateGem" + getInternalODName(mID) + ".name");}
-                case "plateGemTiny":{return translate("oredict.plateGemTiny" + getInternalODName(mID) + ".name");}
-                case "plateQuadruple":{return translate("oredict.plateQuadruple" + getInternalODName(mID) + ".name");}
-                case "plateQuintuple":{return translate("oredict.plateQuintuple" + getInternalODName(mID) + ".name");}
-                case "plateTiny":{return translate("oredict.plateTiny" + getInternalODName(mID) + ".name");}
-                case "plateTriple":{return translate("oredict.plateTriple" + getInternalODName(mID) + ".name");}
-                case "railGt":{return translate("oredict.railGt" + getInternalODName(mID) + ".name");}
-                case "ring":{return translate("oredict.ring" + getInternalODName(mID) + ".name");}
-                case "rockGt":{return translate("oredict.rockGt" + getInternalODName(mID) + ".name");}
-                case "rotor":{return translate("oredict.rotor" + getInternalODName(mID) + ".name");}
-                case "round":{return translate("oredict.round" + getInternalODName(mID) + ".name");}
-                case "scrapGt":{return translate("oredict.scrapGt" + getInternalODName(mID) + ".name");}
-                case "screw":{return translate("oredict.screw" + getInternalODName(mID) + ".name");}
-                case "spring":{return translate("oredict.spring" + getInternalODName(mID) + ".name");}
-                case "springSmall":{return translate("oredict.springSmall" + getInternalODName(mID) + ".name");}
-                case "stick":{return translate("oredict.stick" + getInternalODName(mID) + ".name");}
-                case "stickLong":{return translate("oredict.stickLong" + getInternalODName(mID) + ".name");}
                 case "storage.dust":{return translate("oredict.blockDust" + getInternalODName(mID) + ".name");}
                 case "storage.gem":{return translate("oredict.blockGem" + getInternalODName(mID) + ".name");}
                 case "storage.ingot":{return translate("oredict.blockIngot" + getInternalODName(mID) + ".name");}
@@ -875,43 +853,8 @@
                 case "storage.plateGem":{return translate("oredict.blockPlateGem" + getInternalODName(mID) + ".name");}
                 case "storage.solid":{return translate("oredict.blockSolid" + getInternalODName(mID) + ".name");}
                 case "storage.plateGem":{return translate("oredict.blockPlateGem" + getInternalODName(mID) + ".name");}
-                case "toolHeadArrow":{return translate("oredict.toolHeadArrow" + getInternalODName(mID) + ".name");}
-                case "toolHeadAxe":{return translate("oredict.toolHeadAxe" + getInternalODName(mID) + ".name");}
-                case "toolHeadAxeDouble":{return translate("oredict.toolHeadAxeDouble" + getInternalODName(mID) + ".name");}
-                case "toolHeadBuzzSaw":{return translate("oredict.toolHeadBuzzSaw" + getInternalODName(mID) + ".name");}
-                case "toolHeadChainsaw":{return translate("oredict.toolHeadChainsaw" + getInternalODName(mID) + ".name");}
-                case "toolHeadChisel":{return translate("oredict.toolHeadChisel" + getInternalODName(mID) + ".name");}
-                case "toolHeadConstructionPickaxe":{return translate("oredict.toolHeadConstructionPickaxe" + getInternalODName(mID) + ".name");}
-                case "toolHeadDrill":{return translate("oredict.toolHeadDrill" + getInternalODName(mID) + ".name");}
-                case "toolHeadFile":{return translate("oredict.toolHeadFile" + getInternalODName(mID) + ".name");}
-                case "toolHeadHammer":{return translate("oredict.toolHeadHammer" + getInternalODName(mID) + ".name");}
-                case "toolHeadHoe":{return translate("oredict.toolHeadHoe" + getInternalODName(mID) + ".name");}
-                case "toolHeadPickaxe":{return translate("oredict.toolHeadPickaxe" + getInternalODName(mID) + ".name");}
-                case "toolHeadPickaxeGem":{return translate("oredict.toolHeadPickaxeGem" + getInternalODName(mID) + ".name");}
-                case "toolHeadPlow":{return translate("oredict.toolHeadPlow" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawArrow":{return translate("oredict.toolHeadRawArrow" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawAxe":{return translate("oredict.toolHeadRawAxe" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawAxeDouble":{return translate("oredict.toolHeadRawAxeDouble" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawChisel":{return translate("oredict.toolHeadRawChisel" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawHoe":{return translate("oredict.toolHeadRawHoe" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawPickaxe":{return translate("oredict.toolHeadRawPickaxe" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawPlow":{return translate("oredict.toolHeadRawPlow" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawSaw":{return translate("oredict.toolHeadRawSaw" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawSense":{return translate("oredict.toolHeadRawSense" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawShovel":{return translate("oredict.toolHeadRawShovel" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawSpade":{return translate("oredict.toolHeadRawSpade" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawSword":{return translate("oredict.toolHeadRawSword" + getInternalODName(mID) + ".name");}
-                case "toolHeadRawUniversalSpade":{return translate("oredict.toolHeadRawUniversalSpade" + getInternalODName(mID) + ".name");}
-                case "toolHeadSaw":{return translate("oredict.toolHeadSaw" + getInternalODName(mID) + ".name");}
-                case "toolHeadScrewdriver":{return translate("oredict.toolHeadScrewdriver" + getInternalODName(mID) + ".name");}
-                case "toolHeadSense":{return translate("oredict.toolHeadSense" + getInternalODName(mID) + ".name");}
-                case "toolHeadShovel":{return translate("oredict.toolHeadShovel" + getInternalODName(mID) + ".name");}
-                case "toolHeadSpade":{return translate("oredict.toolHeadSpade" + getInternalODName(mID) + ".name");}
-                case "toolHeadSword":{return translate("oredict.toolHeadSword" + getInternalODName(mID) + ".name");}
-                case "toolHeadUniversalSpade":{return translate("oredict.toolHeadUniversalSpade" + getInternalODName(mID) + ".name");}
-                case "toolHeadWrench":{return translate("oredict.toolHeadWrench" + getInternalODName(mID) + ".name");}
-                case "wireFine":{return translate("oredict.wireFine" + getInternalODName(mID) + ".name");}
-            }
+				default:{return translate("oredict."+Type+getInternalODName(mID)+".name");}
+			}
         }
     </init>
 
@@ -1095,7 +1038,6 @@
 	<line displayname = "提示">
 		try{
 			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
-			
 			switch(nbt['gt.facing']){
 				case 0:
 				case 1:
@@ -1127,9 +1069,6 @@
 			return e.message;
 		}
 	</line>
-	
-
-	
 	<line displayname = "剩余耐久">
 		var t = parseInt(nbt['gt.durability']) / 10000;
 		if(t < anvilDurability(nbt) / 5){
@@ -1157,27 +1096,35 @@
 		}
 		</line>
 		<line displayname = "烫伤警告">
-			if(getConfig("ShowTouchDamage") == 1){
+
 				if(nbt['gt.temperature'] > 320){
 					return RED + "此时接触坩埚将会受到" + HeatDamage(nbt['gt.temperature'],10) + "点伤害" 
 				}
-			}
+
 		</line>
 	    <line displayname = "当前温度">
-		if(getConfig("EnableTemperatureLimit") == 1){
-			if(getConfig("CrucibleMaxShowTemp") < 200) return null;
-			if(nbt['gt.temperature'] > getConfig("CrucibleMaxShowTemp")){
-				return ">" + nbt['gt.temperature']  + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+		var temp = nbt['gt.temperature'];
+		var s1 = temp + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+        var s2 = ">" + tempLimit + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+		switch(showTemprature){
+			case "Always": return s1;
+			case "Never": return null;
+			case "Thermometer":{
+				if(getPlayer().func_70694_bm() == null) return null;
+				var meta = getPlayer().func_70694_bm().func_77960_j();
+				var hold = holding().toString();
+				if(meta != 10000 || hold != "gregtech:gt.multiitem.randomtools") return null;
+				return s1;
 			}
+			case "TempLimit": if(temp <= tempLimit) return s1; else return s2;
 		}
-		return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
         </line>
 		
 		<line displayname = "熔炼物种数">
 			return nbt['gt.materials']['size'] + Unit("种");
         </line>
 		<line displayname = "熔炼物1-4情况">
-			if(getConfig("ScriptStyle") == "2018a"){
+			
 				if(nbt['gt.materials']['0'] != undefined){
 					var str = '';
 					var i = 0;
@@ -1194,11 +1141,11 @@
 					}
 					return str;
 				}
-			}
+			
         </line>
 		
 		<line displayname = "熔炼物5-8情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+		
 			if(nbt['gt.materials']['4'] != undefined){
 				var str = '';
 				var i = 4;
@@ -1215,11 +1162,11 @@
 
 				return str;
 			}
-		}
+		
         </line>
 		
 		<line displayname = "熔炼物9-12情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+		
 			if(nbt['gt.materials']['8'] != undefined){
 				var str = '';
 				var i = 8;
@@ -1236,11 +1183,11 @@
 
 				return str;
 			}
-		}
+		
         </line>
 	
 		<line displayname = "熔炼物13-16情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+	
 			if(nbt['gt.materials']['12'] != undefined){
 				var str = '';
 				var i = 12;
@@ -1257,11 +1204,11 @@
 
 				return str;
 			}
-		}
+		
         </line>
 	
 		<line displayname = "熔炼物17-20情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+		
 			if(nbt['gt.materials']['16'] != undefined){
 				var str = '';
 				var i = 16;
@@ -1278,53 +1225,8 @@
 
 				return str;
 			}
-		}
+		
         </line>
-		<line displayname = "熔炼物1">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['0']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['0']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物2">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['1']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['1']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物3">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['2']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['2']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物4">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['3']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['3']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物5">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['4']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['4']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物6">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['5']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['5']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物7">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['6']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['6']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物8">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['7']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['7']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物9">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['8']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['8']['i']);
-			}
-		</line>
 	</tileentity>
 	
 	<!-- 模具 -->
@@ -1472,7 +1374,7 @@
 		</line>
 
 		<line displayname = "烫伤警告1">
-			if(getConfig("ShowTouchDamage") == 1){
+			
 				if((nbt['gt.energy'] != undefined) && (nbt['gt.tank.1']['Amount'] != undefined)){
 					if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
 						return RED + "此时靠近锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],0) + "点伤害";
@@ -1493,11 +1395,11 @@
 						return RED + "此时靠近锅炉会受到" + HeatDamageSU(0,nbt['gt.tank.1']['Amount'],0) + "点伤害";
 					}
 				}
-			}
+			
 		</line>
 
 		<line displayname = "烫伤警告2">
-			if(getConfig("ShowTouchDamage") == 1){
+		
 				if((nbt['gt.energy'] != undefined) && (nbt['gt.tank.1']['Amount'] != undefined)){
 					if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
 						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],1) + "点伤害";
@@ -1519,7 +1421,7 @@
 						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(0,nbt['gt.tank.1']['Amount'],1) + "点伤害";
 					}
 				}
-			}
+			
 		</line>
 
 		<line displayname = "工作状态">
@@ -2059,14 +1961,60 @@
 	<!-- 管道 -->
 	<tileentity id = "gt.multitileentity.connector.pipe.fluid">
 	    <line displayname = "内容物">
-	    if(nbt['gt.tank.0']['Amount']!=undefined){
-		return fluidName(nbt['gt.tank.0']['FluidName'])+": "+GREEN+nbt['gt.tank.0']['Amount'] + Unit("L");}
+		try{
+			if(nbt['gt.mlast.8'] != undefined) return null;
+			var ret = "";
+			if(nbt['gt.tank.0']!=undefined) ret += fluidName(nbt['gt.tank.0']['FluidName'])+": "+GREEN+nbt['gt.tank.0']['Amount'] + Unit("L");
+			if(nbt['gt.tank.1']!=undefined) ret += " | " + fluidName(nbt['gt.tank.1']['FluidName'])+": "+GREEN+nbt['gt.tank.1']['Amount'] + Unit("L");
+			if(ret != "") return ret;
+			else return null;
+		}
+		catch(e){
+			return e.message;
+		}		
+		</line>
+		<line displayname = "">
+		if(nbt['gt.mlast.8'] != undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.2']!=undefined) ret += fluidName(nbt['gt.tank.2']['FluidName'])+": "+GREEN+nbt['gt.tank.2']['Amount'] + Unit("L");
+		if(nbt['gt.tank.3']!=undefined) ret += " | " + fluidName(nbt['gt.tank.3']['FluidName'])+": "+GREEN+nbt['gt.tank.3']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+		
+		<line displayname = "内容物">
+		if(nbt['gt.mlast.8'] == undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.0']!=undefined) ret += fluidName(nbt['gt.tank.0']['FluidName'])+": "+GREEN+nbt['gt.tank.0']['Amount'] + Unit("L");
+		if(nbt['gt.tank.1']!=undefined) ret += " | " + fluidName(nbt['gt.tank.1']['FluidName'])+": "+GREEN+nbt['gt.tank.1']['Amount'] + Unit("L");
+		if(nbt['gt.tank.2']!=undefined) ret += " | " + fluidName(nbt['gt.tank.2']['FluidName'])+": "+GREEN+nbt['gt.tank.2']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+		<line displayname = "">
+		if(nbt['gt.mlast.8'] == undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.3']!=undefined) ret += fluidName(nbt['gt.tank.3']['FluidName'])+": "+GREEN+nbt['gt.tank.3']['Amount'] + Unit("L");
+		if(nbt['gt.tank.4']!=undefined) ret += " | " + fluidName(nbt['gt.tank.4']['FluidName'])+": "+GREEN+nbt['gt.tank.4']['Amount'] + Unit("L");
+		if(nbt['gt.tank.5']!=undefined) ret += " | " + fluidName(nbt['gt.tank.5']['FluidName'])+": "+GREEN+nbt['gt.tank.5']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
+		</line>
+		<line displayname = "">
+		if(nbt['gt.mlast.8'] == undefined) return null;
+		var ret = "";
+		if(nbt['gt.tank.6']!=undefined) ret += fluidName(nbt['gt.tank.6']['FluidName'])+": "+GREEN+nbt['gt.tank.6']['Amount'] + Unit("L");
+		if(nbt['gt.tank.7']!=undefined) ret += " | " + fluidName(nbt['gt.tank.7']['FluidName'])+": "+GREEN+nbt['gt.tank.7']['Amount'] + Unit("L");
+		if(nbt['gt.tank.8']!=undefined) ret += " | " + fluidName(nbt['gt.tank.8']['FluidName'])+": "+GREEN+nbt['gt.tank.8']['Amount'] + Unit("L");
+		if(ret != "") return ret;
+		else return null;
 		</line>
 	</tileentity>
 	<tileentity id = "gt.multitileentity.generator.burning_liquid">
 	    <line displayname = "剩余热量">
 		if(nbt['gt.active']!= undefined){
-		return nbt['gt.energy']+BLUE+" HU"}
+		return nbt['gt.energy']+BLUE+" HU";
+		}
 		</line>
 		<line displayname = "燃料情况">
 		if(nbt['gt.tank']['FluidName']!=undefined){
@@ -2118,10 +2066,7 @@
 	</line>
 	<line displayname= "处理进度">
 		if(nbt['gt.maxprogress'] != undefined){
-			switch(getConfig("ScriptStyle")){
-				case "2018a":{return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";}
-				case "2020":{return (nbt['gt.progress'] / nbt['gt.maxprogress'] * 100).toFixed(2) + "%"}
-			}
+			return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
 		}
 	</line>
 	<line displayname = "输入流体">{
@@ -2169,18 +2114,23 @@
 	</tileentity>
 	<!-- -->
 	<tileentity id = "gt.multitileentity.multiblock.crucible">
- 
-		
-		
 	    <line displayname = "当前温度">
-			if(getConfig("EnableTemperatureLimit") == 1){
-			if(getConfig("CrucibleMaxShowTemp") < 200) return null;
-			if(nbt['gt.temperature'] > getConfig("CrucibleMaxShowTemp")){
-				return ">" + nbt['gt.temperature']  + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+		var temp = nbt['gt.temperature'];
+		var s1 = temp + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
+        var s2 = ">" + tempLimit + Unit("K") +" / " + getMaxTemperature(nbt) + Unit("K");
+		switch(showTemprature){
+			case "Always": return s1;
+			case "Never": return null;
+			case "Thermometer":{
+				if(getPlayer().func_70694_bm() == null) return null;
+				var meta = getPlayer().func_70694_bm().func_77960_j();
+				var hold = holding().toString();
+				if(meta != 10000 || hold != "gregtech:gt.multiitem.randomtools") return null;
+				return s1;
 			}
+			case "TempLimit": if(temp <= tempLimit) return s1; else return s2;
 		}
-		return nbt['gt.temperature'] + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
-        </line>
+		</line>
 		
 		<line displayname = "熔炼物种数">
 			if(nbt['gt.state.str'] != undefined){
@@ -2189,7 +2139,6 @@
         </line>
 		
 		<line displayname = "熔炼物1-4情况">
-			if(getConfig("ScriptStyle") == "2018a"){
 				if(nbt['gt.materials']['0'] != undefined){
 					var str = '';
 					var i = 0;
@@ -2205,11 +2154,11 @@
 					}
 					return str;
 				}
-			}
+			
         </line>
 		
 		<line displayname = "熔炼物5-8情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+	
 			if(nbt['gt.materials']['4'] != undefined){
 				var str = '';
 				var i = 4;
@@ -2225,15 +2174,14 @@
 
 				return str;
 			}
-		}
+		
         </line>
 		
 		<line displayname = "熔炼物9-12情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+		
 			if(nbt['gt.materials']['8'] != undefined){
 				var str = '';
 				var i = 8;
-
 				while(i < 12){
 					if(nbt['gt.materials'][i.toString()] != undefined){
 						str += parseInt(nbt['gt.materials'][i.toString()]['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + getMaterialName(nbt['gt.materials'][i.toString()]['i']);
@@ -2246,11 +2194,11 @@
 
 				return str;
 			}
-		}
+		
         </line>
 	
 		<line displayname = "熔炼物13-16情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+		
 			if(nbt['gt.materials']['12'] != undefined){
 				var str = '';
 				var i = 12;
@@ -2267,11 +2215,11 @@
 
 				return str;
 			}
-		}
+		
         </line>
 	
 		<line displayname = "熔炼物17-20情况">
-		if(getConfig("ScriptStyle") == "2018a"){
+		
 			if(nbt['gt.materials']['16'] != undefined){
 				var str = '';
 				var i = 16;
@@ -2288,53 +2236,8 @@
 
 				return str;
 			}
-		}
+		
         </line>
-		<line displayname = "熔炼物1">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['0']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['0']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物2">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['1']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['1']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物3">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['2']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['2']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物4">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['3']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['3']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物5">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['4']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['4']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物6">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['5']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['5']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物7">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['6']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['6']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物8">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['7']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['7']['i']);
-			}
-		</line>
-		<line displayname = "熔炼物9">
-			if(getConfig("ScriptStyle") == "2020"){
-				return (nbt['gt.materials']['8']['a'] / 648648000).toFixed(2) + Unit("份 ") +  getMaterialName(nbt['gt.materials']['8']['i']);
-			}
-		</line>
 	</tileentity>
 	
 	<!-- -->
@@ -2347,10 +2250,7 @@
 		</line>
 		<line displayname = "处理进度">
 		if(nbt['gt.maxprogress'] != undefined){
-			switch(getConfig("ScriptStyle")){
-				case "2018a":{return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";}
-				case "2020":{return (nbt['gt.progress'] / nbt['gt.maxprogress'] * 100).toFixed(2) + "%"}
-			}
+				return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
 		}
 		</line>
 		<line displayname = "输入物品">
@@ -2458,10 +2358,9 @@
 			return nbt['gt.tank']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tank']['FluidName']);
 		</line>
 		<line displayname = "能量缓存">
-			if(nbt['gt.energy'] == undefined){}
-			else if(getConfig("ShowEnergyCache") == 1){
-				return nbt['gt.energy'] + Unit("RU");
-			}
+			if(nbt['gt.energy'] == undefined){return null;}
+			return nbt['gt.energy'] + Unit("RU");
+
 		</line>
 	</tileentity>
 	
@@ -2549,10 +2448,9 @@
 		</line>
 		<line displayname = "工作进度">
 		if(nbt['gt.maxprogress'] != undefined){
-			switch(getConfig("ScriptStyle")){
-				case "2018a":{return nbt['gt.progress'] / 20 + " / " + nbt['gt.maxprogress'] / 20 + Unit("S");}
-				case "2020":{return (nbt['gt.progress'] / nbt['gt.maxprogress'] * 100).toFixed(2) + "%"}
-			}
+
+		return nbt['gt.progress'] / 20 + " / " + nbt['gt.maxprogress'] / 20 + Unit("S");
+
 		}
 		</line>
 		<line displayname = "输入物品1">
@@ -2628,7 +2526,7 @@
 	</tileentity>
 
 	<!-- 木质浸洗盆 -->
-	<tileentity id = "gt.multitileentity.bathing.pot.wood">
+	<tileentity id = "gt.multitileentity.bathing.*">
 		<line displayname = "输入物品1">
 			if(nbt['gt.invlist']['0']['s'] == 0){
 				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
@@ -2670,63 +2568,27 @@
 		</line>
 
 		<line displayname = "输出物品1">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 6){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
+			return getSlotItem(nbt,6,12);
 		</line>
 
 		<line displayname = "输出物品2">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 7){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
+			return getSlotItem(nbt,7,12);
 		</line>
 
 		<line displayname = "输出物品3">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 8){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
+			return getSlotItem(nbt,8,12);
 		</line>
 
 		<line displayname = "输出物品4">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 9){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
+			return getSlotItem(nbt,9,12);
 		</line>
 
 		<line displayname = "输出物品5">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 10){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
+			return getSlotItem(nbt,10,12);
 		</line>
 
 		<line displayname = "输出物品6">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 11){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
+			return getSlotItem(nbt,11,12);
 		</line>
 
 		<line displayname = "输出流体1">
@@ -2743,356 +2605,10 @@
 
 	</tileentity>
 
-	<!-- 木制浸洗桌 -->
-	<tileentity id = "gt.multitileentity.bathing.pot.table.wood">
-		<line displayname = "输入物品1">
-			if(nbt['gt.invlist']['0']['s'] == 0){
-				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
-			}
-		</line>
-
-		<line displayname = "输入物品2">
-			if(nbt['gt.invlist']['1']['s'] == 1){
-				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
-			}
-		</line>
-
-		<line displayname = "输入物品3">
-			if(nbt['gt.invlist']['2']['s'] == 2){
-				return nbt['gt.invlist']['2']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['2']);
-			}
-		</line>
-
-		<line displayname = "输入物品4">
-			if(nbt['gt.invlist']['3']['s'] == 3){
-				return nbt['gt.invlist']['3']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['3']);
-			}
-		</line>
-
-		<line displayname = "输入物品5">
-			if(nbt['gt.invlist']['4']['s'] == 4){
-				return nbt['gt.invlist']['4']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['4']);
-			}
-		</line>
-
-		<line displayname = "输入物品6">
-			if(nbt['gt.invlist']['5']['s'] == 5){
-				return nbt['gt.invlist']['5']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['5']);
-			}
-		</line>
-
-		<line displayname = "输入流体">
-			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出物品1">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 6){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品2">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 7){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品3">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 8){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品4">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 9){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品5">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 10){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品6">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 11){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出流体1">
-			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体2">
-			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体3">
-			return nbt['gt.tank.out.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.2']['FluidName']);
-		</line>
-
-	</tileentity>
-
-	<!-- 浸洗盆 -->
-	<tileentity id = "gt.multitileentity.bathing.pot">
-		<line displayname = "输入物品1">
-			if(nbt['gt.invlist']['0']['s'] == 0){
-				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
-			}
-		</line>
-
-		<line displayname = "输入物品2">
-			if(nbt['gt.invlist']['1']['s'] == 1){
-				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
-			}
-		</line>
-
-		<line displayname = "输入物品3">
-			if(nbt['gt.invlist']['2']['s'] == 2){
-				return nbt['gt.invlist']['2']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['2']);
-			}
-		</line>
-
-		<line displayname = "输入物品4">
-			if(nbt['gt.invlist']['3']['s'] == 3){
-				return nbt['gt.invlist']['3']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['3']);
-			}
-		</line>
-
-		<line displayname = "输入物品5">
-			if(nbt['gt.invlist']['4']['s'] == 4){
-				return nbt['gt.invlist']['4']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['4']);
-			}
-		</line>
-
-		<line displayname = "输入物品6">
-			if(nbt['gt.invlist']['5']['s'] == 5){
-				return nbt['gt.invlist']['5']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['5']);
-			}
-		</line>
-
-		<line displayname = "输入流体">
-			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出物品1">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 6){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品2">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 7){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品3">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 8){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品4">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 9){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品5">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 10){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品6">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 11){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出流体1">
-			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体2">
-			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体3">
-			return nbt['gt.tank.out.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.2']['FluidName']);
-		</line>
-
-	</tileentity>
-
-	<!-- 浸洗桌 -->
-	<tileentity id = "gt.multitileentity.bathing.pot.table">
-		<line displayname = "输入物品1">
-			if(nbt['gt.invlist']['0']['s'] == 0){
-				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
-			}
-		</line>
-
-		<line displayname = "输入物品2">
-			if(nbt['gt.invlist']['1']['s'] == 1){
-				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
-			}
-		</line>
-
-		<line displayname = "输入物品3">
-			if(nbt['gt.invlist']['2']['s'] == 2){
-				return nbt['gt.invlist']['2']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['2']);
-			}
-		</line>
-
-		<line displayname = "输入物品4">
-			if(nbt['gt.invlist']['3']['s'] == 3){
-				return nbt['gt.invlist']['3']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['3']);
-			}
-		</line>
-
-		<line displayname = "输入物品5">
-			if(nbt['gt.invlist']['4']['s'] == 4){
-				return nbt['gt.invlist']['4']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['4']);
-			}
-		</line>
-
-		<line displayname = "输入物品6">
-			if(nbt['gt.invlist']['5']['s'] == 5){
-				return nbt['gt.invlist']['5']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['5']);
-			}
-		</line>
-
-		<line displayname = "输入流体">
-			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出物品1">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 6){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品2">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 7){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品3">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 8){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品4">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 9){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品5">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 10){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出物品6">
-			var i = 0;
-			while(i < 12){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 11){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出流体1">
-			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体2">
-			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体3">
-			return nbt['gt.tank.out.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.2']['FluidName']);
-		</line>
-
-	</tileentity>
+	
 
 	<!-- 搅拌盆 -->
-	<tileentity id = "gt.multitileentity.mixing.bowl">
+	<tileentity id = "gt.multitileentity.mixing.*">
 		<line displayname = "输入物品1">
 			if(nbt['gt.invlist']['0']['s'] == 0){
 				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
@@ -3173,87 +2689,6 @@
 
 	</tileentity>
 
-	<!-- 搅拌桌 -->
-	<tileentity id = "gt.multitileentity.mixing.bowl.table">
-		<line displayname = "输入物品1">
-			if(nbt['gt.invlist']['0']['s'] == 0){
-				return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['0']);
-			}
-		</line>
-
-		<line displayname = "输入物品2">
-			if(nbt['gt.invlist']['1']['s'] == 1){
-				return nbt['gt.invlist']['1']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['1']);
-			}
-		</line>
-
-		<line displayname = "输入物品3">
-			if(nbt['gt.invlist']['2']['s'] == 2){
-				return nbt['gt.invlist']['2']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['2']);
-			}
-		</line>
-
-		<line displayname = "输入物品4">
-			if(nbt['gt.invlist']['3']['s'] == 3){
-				return nbt['gt.invlist']['3']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['3']);
-			}
-		</line>
-
-		<line displayname = "输入物品5">
-			if(nbt['gt.invlist']['4']['s'] == 4){
-				return nbt['gt.invlist']['4']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['4']);
-			}
-		</line>
-
-		<line displayname = "输入物品6">
-			if(nbt['gt.invlist']['5']['s'] == 5){
-				return nbt['gt.invlist']['5']['Count'] + Unit("个 ") + name(nbt['gt.invlist']['5']);
-			}
-		</line>
-
-		<line displayname = "输入流体1">
-			return nbt['gt.tank.in.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.0']['FluidName']);
-		</line>
-
-		<line displayname = "输入流体2">
-			return nbt['gt.tank.in.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.1']['FluidName']);
-		</line>
-
-		<line displayname = "输入流体3">
-			return nbt['gt.tank.in.2']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.2']['FluidName']);
-		</line>
-
-		<line displayname = "输入流体4">
-			return nbt['gt.tank.in.3']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.3']['FluidName']);
-		</line>
-
-		<line displayname = "输入流体5">
-			return nbt['gt.tank.in.4']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.4']['FluidName']);
-		</line>
-
-		<line displayname = "输入流体6">
-			return nbt['gt.tank.in.5']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.in.5']['FluidName']);
-		</line>
-
-		<line displayname = "输出物品">
-			var i = 0;
-			while(i < 7){
-				if(nbt['gt.invlist'][i.toString()]['s'] == 6){
-					return nbt['gt.invlist'][i.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][i.toString()]);
-				}
-				i++
-			}
-		</line>
-
-		<line displayname = "输出流体1">
-			return nbt['gt.tank.out.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.0']['FluidName']);
-		</line>
-
-		<line displayname = "输出流体2">
-			return nbt['gt.tank.out.1']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.out.1']['FluidName']);
-		</line>
-
-	</tileentity>
 
 	<!-- 榨汁机 -->
 	<tileentity id = "gt.multitileentity.juicer">
@@ -3426,10 +2861,6 @@
 		</line>
 	</tileentity>
 
-	<tileentity id = "gt.multitileentity.multiblock.lightningrod">
-	<line displayname = "警告">
-		checkComplete(nbt);
-	</line>
 	</tileentity>
 	<tileentity id = "gt.multitileentity.multiblock.drill.bedrock">
 	<line displayname = "警告">
@@ -3460,7 +2891,7 @@
 		</line>
 
 		<line displayname = "烫伤警告">
-			if(getConfig("ShowTouchDamage") == 1){
+
 				if((nbt['gt.energy'] != undefined) && (nbt['gt.tank.1']['Amount'] != undefined)){
 					if((nbt['gt.energy'] + nbt['gt.tank.1']['Amount'] / 2) > 2000){
 						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(nbt['gt.energy'],nbt['gt.tank.1']['Amount'],1) + "点伤害";
@@ -3482,7 +2913,7 @@
 						return RED + "此时使用凿子清理锅炉会受到" + HeatDamageSU(0,nbt['gt.tank.1']['Amount'],1) + "点伤害";
 					}
 				}
-			}
+			
 		</line>
 
 		<line displayname = "工作状态">
@@ -3612,21 +3043,6 @@
 		</line>
 		
 	</tileentity>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	<!-- 筛粉漏斗 -->
 	<tileentity id = "gt.multitileentity.funnel.dust">
@@ -3783,130 +3199,53 @@
 		</line>
 
 		<line displayname = "输出产物1">
-			var order = 1;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,1);
 		</line>
 
 		<line displayname = "输出产物2">
-			var order = 2;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,2);
 		</line>
 
 		<line displayname = "输出产物3">
-			var order = 3;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,3);
 		</line>
 
 		<line displayname = "输出产物4">
-			var order = 4;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,4);
 		</line>
 
 		<line displayname = "输出产物5">
-			var order = 5;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,5);
 		</line>
 
 		<line displayname = "输出产物6">
-			var order = 6;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,6);
 		</line>
 
 		<line displayname = "输出产物7">
-			var order = 7;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,7);
 		</line>
 
 		<line displayname = "输出产物8">
-			var order = 8;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,8);
 		</line>
 
 		<line displayname = "输出产物9">
-			var order = 9;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,9);
 		</line>
 
 		<line displayname = "输出产物10">
-			var order = 10;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,10);
 		</line>
 
 		<line displayname = "输出产物11">
-			var order = 11;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,11);
 		</line>
 
 		<line displayname = "输出产物12">
-			var order = 12;
-			if(nbt['gt.invlist']['0']['s'] != 0){
-				order -= 1;
-			}
-			if(nbt['gt.invlist'][order.toString()] != undefined){
-				return nbt['gt.invlist'][order.toString()]['Count'] + Unit("个 ") + name(nbt['gt.invlist'][order.toString()]);
-			}
+			getSlotItem(nbt,12);
 		</line>
 
-	</tileentity>
-
-	<!-- 铸币模具 -->
-	<tileentity id = "gt.multitileentity.mold.coins">
-	<!-- TODO -->
 	</tileentity>
 
 	<!-- 焦炉 -->
@@ -3945,7 +3284,7 @@
 		</line>
 
 		<line displayname = "工作进程">
-			if(nbt['gt.progress'] != undefined){
+			if(nbt['gt.progress'] != undefined && showProgress){
 				return nbt['gt.progress'] / 20 + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
 			}
 		</line>
@@ -4010,10 +3349,6 @@
 
 	</tileentity>
 
-	<!-- 泵 -->
-	<tileentity id = "gt.multitileentity.pump.rotation">
-		
-	</tileentity>
 
 	<!-- 加工机器 -->
 	<tileentity id = "gt.multitileentity.machine.basic">
@@ -4022,7 +3357,7 @@
 		</line>
 
 		<line displayname = "工作进程">
-			if(nbt['gt.progress'] != undefined){
+			if(nbt['gt.progress'] != undefined && showProgress){
 				return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
 			}
 		</line>
@@ -4250,7 +3585,7 @@
 		</line>
 
 		<line displayname = "工作进程">
-			if(nbt['gt.progress'] != undefined){
+			if(nbt['gt.progress'] != undefined && showProgress){
 				return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
 			}
 		</line>
@@ -4484,7 +3819,9 @@
 		<line displayname = "警告">
 			if(nbt['id'] != "gt.multitileentity.multiblock.part") return checkComplete(nbt);
 		</line>
+
 	</tileentity>
+	
 	
 	<tileentity id = "gt.multitileentity.generator.reactor.core.*">
 		<line displayname = "冷却介质">
@@ -4502,12 +3839,9 @@
 			if(nbt['gt.stopped'] == undefined){
 					return getReactorHeat(nbt) + Unit("HU") + "/t";
 			}
-
 		}
-		catch(e){
-			
-		}
-			
+		catch(e){	
+		}	
 		</line>
 
 		<line displayname = "燃料棒1">
@@ -4561,6 +3895,8 @@
 			}
 		</line>
 
+		
+
 		<line displayname = "中子数">
 		try{
 			if(nbt['gt.stopped'] == 1) return undefined;
@@ -4601,7 +3937,7 @@
 		</line>
 		
 		<line displayname = "配方进度">
-			if(nbt['gt.active'] == 1){
+			if(nbt['gt.active'] == 1 && showProgress){
 				return (nbt['gt.progress'] / 20) + " / " + (nbt['gt.maxprogress'] / 20) +Unit("S") + " - " + parseInt(nbt['gt.progress'] / nbt['gt.maxprogress'] * 1000) / 10 + "%"
 			}
 		</line>
@@ -4638,5 +3974,57 @@
 			if(nbt['gt.invout.0'] != undefined) return nbt['gt.invout.0']['Count'] + Unit("个") + " " + name(nbt['gt.invout.0']);
 		</line>
 		
+	</tileentity>
+	<tileentity id = "gt.multitileentity.connector.wire.electric">
+		<line displayname = "功率">
+		try{
+			if(instance == null) return null;
+			if(getPlayer().func_70694_bm() == null) return null;
+			var meta = getPlayer().func_70694_bm().func_77960_j();
+			var hold = holding().toString();
+			var sideVar = ['a','b','c','d','e','f'];
+			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
+			if(meta == 10003 && hold == "gregtech:gt.multiitem.randomtools"){
+				if(nbt['gt.covers'] != undefined){
+					if(nbt['gt.covers'][sideVar[side]] != undefined) return 233;
+				}
+				instance.sendRightClick(nbt['x'],nbt['y'],nbt['z']);
+				var mNBT = eval("("+instance.getData()+")");
+				if(mNBT == null) return null;
+				if(mNBT['x'] ==  nbt['x'] && mNBT['y'] ==  nbt['y'] && mNBT['z'] ==  nbt['z']){
+					return mNBT['eu'] + Unit('EU') + "/t";
+				}
+			}
+		}
+		catch(e){
+		}
+		</line>
+		
+
+	</tileentity>
+	<tileentity id = "gt.multitileentity.connector.axle.rotation">
+		<line displayname = "功率">
+		try{
+			if(instance == null) return null;
+			if(getPlayer().func_70694_bm() == null) return null;
+			var meta = getPlayer().func_70694_bm().func_77960_j();
+			var hold = holding().toString();
+			var sideVar = ['a','b','c','d','e','f'];
+			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
+			if(meta == 10004 && hold == "gregtech:gt.multiitem.randomtools"){
+				if(nbt['gt.covers'] != undefined){
+					if(nbt['gt.covers'][sideVar[side]] != undefined) return 233;
+				}
+				instance.sendRightClick(nbt['x'],nbt['y'],nbt['z']);
+				var mNBT = eval("("+instance.getData()+")");
+				if(mNBT == null) return null;
+				if(mNBT['x'] ==  nbt['x'] && mNBT['y'] ==  nbt['y'] && mNBT['z'] ==  nbt['z']){
+					return mNBT['ru'] + Unit('RU') + "/t";
+				}
+			}
+		}
+		catch(e){
+		}
+		</line>	
 	</tileentity>
 </oo>
