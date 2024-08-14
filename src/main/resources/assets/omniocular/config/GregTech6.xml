@@ -17,7 +17,7 @@
 	var showDamage = true;
 	var showFluidTank = true;
 	var showProgress = true;
-	var enableTestContent = true;
+	var enableTestContent = false;
 	</init>
 
 	<init>
@@ -3996,7 +3996,7 @@
 			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
 			if(meta == 10003 && hold == "gregtech:gt.multiitem.randomtools"){
 				if(nbt['gt.covers'] != undefined){
-					if(nbt['gt.covers'][sideVar[side]] != undefined) return 233;
+					if(nbt['gt.covers'][sideVar[side]] != undefined) return null;
 				}
 				instance.sendRightClick(nbt['x'],nbt['y'],nbt['z']);
 				var mNBT = eval("("+instance.getData()+")");
@@ -4023,7 +4023,7 @@
 			var side = Minecraft.func_71410_x().field_71476_x.field_72310_e;
 			if(meta == 10004 && hold == "gregtech:gt.multiitem.randomtools"){
 				if(nbt['gt.covers'] != undefined){
-					if(nbt['gt.covers'][sideVar[side]] != undefined) return 233;
+					if(nbt['gt.covers'][sideVar[side]] != undefined) return null;
 				}
 				instance.sendRightClick(nbt['x'],nbt['y'],nbt['z']);
 				var mNBT = eval("("+instance.getData()+")");
