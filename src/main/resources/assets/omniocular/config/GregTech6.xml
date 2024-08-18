@@ -8,11 +8,11 @@
 <!--Updated Version:6.17.01,Updated Author:mordd -->
 <oo>
 	<!--下列变量为脚本配置-->
-	<!--showTemprature 可用值:Always,Thermometer,Limit,Never.非法值将会视作Always-->
+	<!--showTemperature 可用值:Always,Thermometer,Limit,Never.非法值将会视作Always-->
 	<!--tempLimit至少为373-->
 	<!--TODO: showFluidTank 和 showDamage 尚未正确实现 -->
 	<init>
-	var showTemprature = "TempLimit";
+	var showTemperature = "Always";
 	var tempLimit = 373;
 	var showDamage = true;
 	var showFluidTank = true;
@@ -25,6 +25,7 @@
 	var cout = Java.type("gregapi.data.CS").OUT;
 	var testClass = undefined;
 	var loader = Java.type("me.exz.omniocular.OmniOcular").class.getClassLoader();
+	var FuelMap = Java.type("gregapi.data.FM");
 	
 	function parseString(s,c) {
 		var ByteArray = Java.type("byte[]");
@@ -73,14 +74,7 @@
 		cout.println(e.message);
 		return -1;
 	}
-	try{
-		var text = Java.type("net.minecraft.util.ChatComponentText");
-		Minecraft.func_71410_x().field_71439_g.func_146105_b(new text("reload complete."));
-	}
-	catch(e){
-		cout.println(e.name); 
-		cout.println(e.message);
-	}
+
 		return 1;
 	}
 	function getInstance(){
@@ -91,12 +85,20 @@
 	function init(){
 		if(enableTestContent) init2();
 		if(tempLimit < 373) tempLimit = 373;
-		switch(showTemprature){
+		switch(showTemperature){
 			case "Always":break;
 			case "Never":break;
 			case "Thermometer":break;
 			case "TempLimit":break;
-			default: showTemprature = "Always";
+			default: showTemperature = "Always";
+		}
+		try{
+		var text = Java.type("net.minecraft.util.ChatComponentText");
+		Minecraft.func_71410_x().field_71439_g.func_146105_b(new text("reload complete."));
+		}
+		catch(e){
+			cout.println(e.name); 
+			cout.println(e.message);
 		}
 	}
 	</init>
@@ -119,7 +121,11 @@
 		return Minecraft.func_71410_x().field_71439_g;
 	}
 	</init>
-	
+	<init>
+	function isSneaking(){
+		return getPlayer().func_70093_af();
+	}
+	</init>
 	<init>
 	function nbt2json(tagCompound){
 		var str = Java.type("me.exz.omniocular.util.NBTHelper").NBT2json(tagCompound);
@@ -192,7 +198,6 @@
 		importClass(Packages.gregapi.oredict.OreDictMaterial);
 	}
 	catch(e){}
-	
 	function getMaterialName(aID){
 		var t = Packages.gregapi.oredict.OreDictMaterial.get(aID);
 		return translate("gt.material." + t.mNameInternal);
@@ -221,6 +226,33 @@
 	}
 	</init>
 
+
+	<init>
+	function formatTime(tick){
+		var str = '';
+		if(tick < 20) str += tick + " t";
+		else if(tick <= 2400) str += tick / 20 + " s";
+		else if(tick <= 144000) {
+			str += parseInt(tick / 1200) + " min";
+			if(tick % 1200 >= 20){
+				str += " " + parseInt(tick % 1200 / 20) + " s";
+			}
+		}
+		else if(tick <= 3456000){
+			str += parseInt(tick / 72000) + " h";
+			if(tick % 72000 >= 1200){
+				str += " " + parseInt(tick % 72000 / 1200) + " min";
+			}
+		} 
+		else{
+			str += parseInt(tick / 1728000) + " d";
+			if(tick % 172800 >= 72000){
+				str += " " + parseInt(tick % 172800 / 72000) + " h";
+			}
+		} 
+		return str;
+	}
+	</init>
 	<!-- ID to EnergyTier -->
 	<!-- HU SU - 蒸汽锅炉,SU KU - 蒸汽引擎,EU KU - 电动引擎,SU RU - 单方块涡轮,EU HU - 电力加热器, -->
 	<!-- EU RU - 电力旋转动能引擎,EU MU - 电磁铁,EU EU - 变压器,EU EU - 电池盒,EU LU - CO2激光器, -->
@@ -463,11 +495,39 @@
 	
 	<!-- gt砧耐久 -->
 	<init>
-	function anvilDurability(aNBT){
-		return parseInt(getDefaultNBT(aNBT['gt.mte.id'])['gt.durability'] / 10000);
-	}
+		function anvilDurability(aNBT){
+			return parseInt(getDefaultNBT(aNBT['gt.mte.id'])['gt.durability'] / 10000);
+		}
 	</init>
 	
+	
+	<init>
+		function getFuelHeat(fuelMap,fuel){
+			try{
+				var list = fuelMap.mRecipeFluidMap.get(fuel).iterator();
+				var t = 0;
+				if(list != null && list.hasNext()){
+					var recipe = list.next();
+					t = recipe.mEUt * recipe.mDuration * -1;
+					var fluids = recipe.mFluidInputs;
+					for(i = 0;i < fluids.length;i++){
+						var fr = Java.type("net.minecraftforge.fluids.FluidRegistry");
+						var fName = fr.getFluidName(fluids[i].getFluid());
+						if(fName == fuel){
+							t /= fluids[i].amount;
+							break;
+						}
+					}
+				}
+				return t;
+			}
+			catch(e){
+			cout.println(e.message);
+				return -1;
+				
+			}
+		}
+	</init>
 	<!-- 判断靠近锅炉所受伤害数值 -->
 	<init>
 		function HeatDamageSU(enCap,SUCap,isChisel){
@@ -494,10 +554,10 @@
 			}
 		}
 	</init>
-	<!--流体燃烧室容量 -->
+	
 	<init>
-		function BurningBox_Cap(id){
-			return parseInt(getDefaultNBT(id)['gt.output'] * 10);
+		function getOutput(aNBT){
+			return parseInt(getDefaultNBT(aNBT['gt.mte.id'])['gt.output']);
 		}
 	</init>
 	<!-- 蒸汽引擎效率 -->
@@ -520,6 +580,12 @@
 				case 1310:{return 6450;}
 				case 1311:{return 6200;}
 			}
+		}
+	</init>
+	
+	<init>
+		function getEfficiency(aNBT){
+			return parseInt(getDefaultNBT(aNBT['gt.mte.id'])['gt.eff']) / 10000;
 		}
 	</init>
 
@@ -677,7 +743,7 @@
 			var index = 0;
 			while(index < aMaxSlot){
 			if(aNBT['gt.invlist'][index.toString()]['s'] == aSlot){
-				cout.println(aNBT['gt.invlist'][index.toString()]['Count'] + Unit("个 ") + name(aNBT['gt.invlist'][index.toString()]));
+			
 				return aNBT['gt.invlist'][index.toString()]['Count'] + Unit("个 ") + name(aNBT['gt.invlist'][index.toString()]);
 			}
 			index++;
@@ -1056,7 +1122,7 @@
 		var temp = nbt['gt.temperature'];
 		var s1 = temp + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
         var s2 = ">" + tempLimit + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
-		switch(showTemprature){
+		switch(showTemperature){
 			case "Always": return s1;
 			case "Never": return null;
 			case "Thermometer":{
@@ -1831,19 +1897,72 @@
 	
 	<tileentity id = "gt.multitileentity.generator.motor_liquid">
 	<line displayname = "工作状态">
-		if(nbt['gt.energy'] > 0){
-			return GREEN + "运行";
+		if(nbt['gt.energy'] != undefined){
+			return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("RU") + "/t";
 		}
 		return RED + "停机";
 	</line>
+	
+	<line displayname = "剩余能量">
+	if(!isSneaking()) return null;
+	else return nbt['gt.energy'] + Unit("RU");
+	</line>
 	<line displayname = "燃油储量">
 		if(!showFluidTank) return null;
-		return nbt['gt.tank.0']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank.0']['FluidName']);
+		if(nbt['gt.tank.0']['FluidName']!=undefined){
+			var str = nbt['gt.tank.0']['Amount'] + " / " + getOutput(nbt) * 10 + Unit("L") + " " +  fluidName(nbt['gt.tank.0']['FluidName']);
+			if(!isSneaking() && nbt['gt.energy']!= undefined){
+				var fh = getFuelHeat(FuelMap.Engine,nbt['gt.tank.0']['FluidName']);
+				if(fh <= 0) return str;
+				var tConusme = getOutput(nbt) / (fh * getEfficiency(nbt));
+				if(tConusme < 0.2){
+					str += " (" + RED + "-" + parseInt(tConusme * 2000) / 100 + Unit("L") +"/s)";
+				}
+				else str += " (" + RED + "-" + parseInt(tConusme * 100) / 100 + Unit("L") +"/t)";
+			}
+			return str;
+		}
 	</line>
+
 	<line displayname = "尾气储量">
 		if(!showFluidTank) return null;
 		return nbt['gt.tank.1']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tank.1']['FluidName']);
 	</line>
+	</tileentity>
+	<!-- 热交换器  -->
+	<!-- 之前居然没有... -->
+	<tileentity id = "gt.multitileentity.generator.hot_fluid">
+		 <line displayname = "工作状态">
+		if(nbt['gt.energy'] != undefined) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("HU") + "/t";
+		else return RED + "停机";
+		</line>
+
+		<line displayname = "剩余热量">
+		if(!isSneaking()) return null;
+		if(nbt['gt.energy'] != undefined){
+		return nbt['gt.energy']+Unit("HU");
+		}
+		</line>
+		<line displayname = "热流体储量">
+		if(nbt['gt.tank.0']['FluidName']!=undefined){
+			var str = nbt['gt.tank.0']['Amount'] + " / " + getOutput(nbt) * 10 + Unit("L") + " " +  fluidName(nbt['gt.tank.0']['FluidName']);
+			if(!isSneaking() && nbt['gt.energy']!= undefined){
+				var fh = getFuelHeat(FuelMap.Hot,nbt['gt.tank.0']['FluidName']);
+				if(fh <= 0) return str;
+				var tConusme = getOutput(nbt) / (fh * getEfficiency(nbt));
+				if(tConusme < 0.2){
+					str += " (" + RED + "-" + parseInt(tConusme * 2000) / 100 + Unit("L") +"/s)";
+				}
+				else str += " (" + RED + "-" + parseInt(tConusme * 100) / 100 + Unit("L") +"/t)";
+			}
+			return str;
+		}
+		</line>
+	<line displayname = "废液储量">
+		if(!showFluidTank) return null;
+		return nbt['gt.tank.1']['Amount'] + Unit("L") + " " +fluidName(nbt['gt.tank.1']['FluidName']);
+	</line>
+	
 	</tileentity>
 	
 	<!-- 大型晶体充能器 -->
@@ -1971,39 +2090,80 @@
 		</line>
 	</tileentity>
 	<tileentity id = "gt.multitileentity.generator.burning_liquid">
-	    <line displayname = "剩余热量">
+	    <line displayname = "工作状态">
+		if(nbt['gt.active'] != undefined) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("HU") + "/t";
+		else return RED + "停机";
+		</line>
+
+		<line displayname = "剩余热量">
+		if(!isSneaking()) return null;
 		if(nbt['gt.active']!= undefined){
-		return nbt['gt.energy']+BLUE+" HU";
+		return nbt['gt.energy']+Unit("HU");
 		}
 		</line>
 		<line displayname = "燃料情况">
 		if(nbt['gt.tank']['FluidName']!=undefined){
-			return nbt['gt.tank']['Amount'] + " / " + BurningBox_Cap(nbt['gt.mte.id']) + Unit("L") + " " +  fluidName(nbt['gt.tank']['FluidName']);
+			var str = nbt['gt.tank']['Amount'] + " / " + getOutput(nbt) * 10 + Unit("L") + " " +  fluidName(nbt['gt.tank']['FluidName']);
+			if(!isSneaking() && nbt['gt.active']!= undefined){
+				var fh = getFuelHeat(FuelMap.Burn,nbt['gt.tank']['FluidName']);
+				if(fh <= 0) return str;
+				var tConusme = getOutput(nbt) / (fh * getEfficiency(nbt));
+				if(tConusme < 0.2){
+					str += " (" + RED + "-" + parseInt(tConusme * 2000) / 100 + Unit("L") +"/s)";
+				}
+				else str += " (" + RED + "-" + parseInt(tConusme * 100) / 100 + Unit("L") +"/t)";
+			}
+			return str;
 		}
 		</line>
 	</tileentity>
 	<tileentity id = "gt.multitileentity.generator.burning_gas">
+		<line displayname = "工作状态">
+		if(nbt['gt.active'] != undefined) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("HU") + "/t";
+		else return RED + "停机";
+		</line>
+	
 	    <line displayname = "剩余热量">
+		if(!isSneaking()) return null;
 		if(nbt['gt.active']!= undefined){
-		return nbt['gt.energy']+BLUE+" HU"}
+		return nbt['gt.energy']+Unit("HU");
+		}
 		</line>
 		<line displayname = "燃料情况">
 		if(nbt['gt.tank']['FluidName']!=undefined){
-			return nbt['gt.tank']['Amount'] + " / " + BurningBox_Cap(nbt['gt.mte.id']) + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']);
+			var str = nbt['gt.tank']['Amount'] + " / " + getOutput(nbt) * 10 + Unit("L") + " " +  fluidName(nbt['gt.tank']['FluidName']);
+			if(!isSneaking() && nbt['gt.active']!= undefined){
+				var fh = getFuelHeat(FuelMap.Burn,nbt['gt.tank']['FluidName']);
+				if(fh <= 0) return str;
+				var tConusme = getOutput(nbt) / fh;
+				if(tConusme < 0.2){
+					str += " (" + RED + "-" + parseInt(tConusme * 2000) / 100 + Unit("L") +"/s)";
+				}
+				else str += " (" + RED + "-" + parseInt(tConusme * 100) / 100 + Unit("L") +"/t)";
+			}
+			return str;
 		}
 		</line>
+		
 	</tileentity>
 	<!-- 砖块燃烧室 -->
 	<tileentity id = "gt.multitileentity.generator.burning_brick">
-	    <line displayname = "剩余热量">
+	    <line displayname = "工作状态">
+		if(nbt['gt.active'] != undefined) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("HU") + "/t";
+		else return RED + "停机";
+		</line>
+		<line displayname = "剩余热量">
+		if(!isSneaking()) return null;
 		if(nbt['gt.active']!= undefined){
 		return nbt['gt.energy']+BLUE+" HU"}
 		</line>  
-		<line displayname = "燃料情况">
-		if(nbt['gt.invlist']['0']['Damage']!=8200)
-		if(nbt['gt.invlist']['0']['Damage']!=8201){
-		return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0'])}	
+		<line displayname = "剩余燃烧时间">
+		if(isSneaking()) return null;
+		else if(nbt['gt.active'] != undefined){
+			return formatTime(parseInt(nbt['gt.energy'] / getOutput(nbt)));
+		}
 		</line>
+
 		<line displayname = "灰烬情况">
 		switch(nbt['gt.invlist']['0']['Damage']) {
 		case 8200:return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0']);
@@ -2025,7 +2185,8 @@
 		}
 	</line>
 	<line displayname= "处理进度">
-		if(nbt['gt.maxprogress'] != undefined){
+		if(!showProgress) return null;
+ 		if(nbt['gt.maxprogress'] != undefined){
 			return nbt['gt.progress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " / " + nbt['gt.maxprogress'] / 20 / nbt['gt.minenergy'] + Unit("S") + " - " + parseInt(nbt['gt.progress'] * 10000 / nbt['gt.maxprogress']) / 100 + " %";
 		}
 	</line>
@@ -2086,7 +2247,7 @@
 		var temp = nbt['gt.temperature'];
 		var s1 = temp + Unit("K") + " / " + getMaxTemperature(nbt) + Unit("K");
         var s2 = ">" + tempLimit + Unit("K") +" / " + getMaxTemperature(nbt) + Unit("K");
-		switch(showTemprature){
+		switch(showTemperature){
 			case "Always": return s1;
 			case "Never": return null;
 			case "Thermometer":{
@@ -2266,6 +2427,7 @@
 		}
 	</line>
 	<line displayname= "处理进度">
+		if(!showProgress) return null;
 		if(nbt['gt.maxprogress'] != undefined){
 			return nbt['gt.progress'] / nbt['gt.minenergy'] / 20 + " / " + nbt['gt.maxprogress'] / nbt['gt.minenergy'] / 20 + Unit("S");
 		}
@@ -2273,10 +2435,21 @@
 	</tileentity>
 	
 	<tileentity id = "gt.multitileentity.generator.burning_fluidbed">
-	    <line displayname = "剩余热量">
+	    <line displayname = "工作状态">
+		if(nbt['gt.active'] != undefined) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("HU") + "/t";
+		else return RED + "停机";
+		</line>
+		<line displayname = "剩余热量">
+		if(!isSneaking()) return null;
 		if(nbt['gt.active']!= undefined){
 		return nbt['gt.energy']+BLUE+" HU"}
 		</line>  
+		<line displayname = "剩余燃烧时间">
+		if(isSneaking()) return null;
+		else if(nbt['gt.active'] != undefined){
+			return formatTime(parseInt(nbt['gt.energy'] / getOutput(nbt)));
+		}
+		</line>
 		<line displayname = "熔融方解石供应">
 		if(!showFluidTank) return null;
 		if(nbt['gt.tank']['Amount']!=undefined){
@@ -2326,11 +2499,25 @@
 	
 	<!-- 加热器 -->
 	<tileentity id = "gt.multitileentity.generator.burning_solid">
-	    <line displayname = "剩余热量">
+		<line displayname = "工作状态">
+		if(nbt['gt.active'] != undefined) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("HU") + "/t";
+		else return RED + "停机";
+		</line>
+		<line displayname = "剩余热量">
+		if(!isSneaking()) return null;
 		if(nbt['gt.active']!= undefined){
 		return nbt['gt.energy']+BLUE+" HU"}
 		</line>  
-		<line displayname = "燃料情况">
+		<line displayname = "剩余燃烧时间">
+		if(isSneaking()) return null;
+		else if(nbt['gt.active'] != undefined){
+			return formatTime(parseInt(nbt['gt.energy'] / getOutput(nbt)));
+		}
+		</line>
+	
+		
+		
+		<line displayname = "剩余燃料">
 		if(nbt['gt.invlist']['0']['Damage']!=8200)
 		if(nbt['gt.invlist']['0']['Damage']!=8201){
 		return nbt['gt.invlist']['0']['Count'] + Unit("个 ") + RED + name(nbt['gt.invlist']['0'])}	
@@ -2352,25 +2539,7 @@
 	    <line displayname = "生成速度">
 			var str = ' ';
 			var AmountTemp = nbt['gt.spring']['Amount'];
-			if(AmountTemp > 20 * 60 * 60 * 24){
-				str += parseInt(AmountTemp / (20 * 60 * 60 * 24)) + " 天";
-				AmountTemp = AmountTemp % (20 * 60 * 60 * 24);
-			}
-			if(AmountTemp > 20 * 60 * 60){
-				str += parseInt(AmountTemp / (20 * 60 * 60)) + " 小时";
-				AmountTemp = AmountTemp % (20 * 60 * 60);
-			}
-			if(AmountTemp > 20 * 60){
-				str += parseInt(AmountTemp / (20 * 60)) + " 分钟";
-				AmountTemp = AmountTemp % (20 * 60);
-			}
-			if(AmountTemp > 20){
-				str += parseInt(AmountTemp / (20)) + " 秒";
-				AmountTemp = AmountTemp % (20);
-			}
-			if(AmountTemp > 0){
-				str += parseInt(AmountTemp) + " Tick";
-			}
+			str += formatTime(parseInt(AmountTemp));
 
 			return str + "/桶";
 		</line>
@@ -2408,6 +2577,7 @@
 			}
 		</line>
 		<line displayname = "工作进度">
+		if(!showProgress) return null;
 		if(nbt['gt.maxprogress'] != undefined){
 		return nbt['gt.progress'] / 20 + " / " + nbt['gt.maxprogress'] / 20 + Unit("S");
 
@@ -3020,9 +3190,23 @@
 		<line displayname = "警告">
 			checkComplete(nbt);
 		</line>
+		<line displayname = "工作状态">
+			if(nbt['gt.can.energy'] != null || nbt['gt.energy'] != null) return BLUE + "运行中" + WHITE + " - " + getOutput(nbt) + Unit("RU") + "/t";			
+			return RED + "停机";
+		</line>
 		<line displayname = "燃料情况">
 			if(!showFluidTank) return null;
-			return nbt['gt.tank']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']); 
+			var str = nbt['gt.tank']['Amount'] + Unit("L") + " " + fluidName(nbt['gt.tank']['FluidName']); 
+			if(nbt['gt.can.energy'] != null){
+				var fh = getFuelHeat(FuelMap.Gas,nbt['gt.tank']['FluidName']);
+				if(fh <= 0) return fh;
+				var tConusme = getOutput(nbt) / fh;
+				if(tConusme < 0.2){
+					str += " (" + RED + "-" + parseInt(tConusme * 2000) / 100 + Unit("L") +"/s)";
+				}
+				else str += " (" + RED + "-" + parseInt(tConusme * 100) / 100 + Unit("L") +"/t)";
+			}
+			return str;
 		</line>
 		
 	</tileentity>
@@ -3096,7 +3280,7 @@
 				}
 				catch(e){
 					if(nbt['gt.materials']['a'] != undefined){
-						return parseInt(nbt['gt.materials']['a'] / 420076800 * 1000) / 1000 + Unit("份 ") + nbt['gt.materials']['i'];
+						return parseInt(nbt['gt.materials']['a'] / 648648000 * 1000) / 1000 + Unit("份 ") + nbt['gt.materials']['i'];
 					}
 				}
 			}
@@ -3309,6 +3493,7 @@
 	<!-- 浆果 -->
 	<tileentity id = "gt.multitileentity.plant.bush">
 		<line displayname = "生长进度">
+			if(!showProgress) return null;
 			if(nbt['gt.state'] != 3){
 				var t = nbt['gt.state'] * 256;
 				if(nbt['gt.progress'] < 0) t = t + 256;
@@ -3861,7 +4046,7 @@
 					if(nbt['gt.invlist'][i.toString()]['s'] == 0){
 
 						var str = name(nbt['gt.invlist'][i.toString()]);
-						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += " | 耐久: " + formatTime(parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 100));
 						return str;
 					}
 				}
@@ -3876,7 +4061,7 @@
 					if(nbt['gt.invlist'][i.toString()]['s'] == 1){
 					
 						var str = name(nbt['gt.invlist'][i.toString()]);
-						if(nbt['gt.invlist'][i.toString()]['tag']!= undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						if(nbt['gt.invlist'][i.toString()]['tag']!= undefined) str += " | 耐久: " + formatTime(parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 100));
 						return str;
 					}
 				}
@@ -3887,7 +4072,7 @@
 				if(nbt['gt.invlist'][i.toString()] != undefined){
 					if(nbt['gt.invlist'][i.toString()]['s'] == 2){
 						var str = name(nbt['gt.invlist'][i.toString()]);
-						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += " | 耐久: " + formatTime(parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 100));
 						return str;
 					}
 				}
@@ -3898,7 +4083,7 @@
 				if(nbt['gt.invlist'][i.toString()] != undefined){
 					if(nbt['gt.invlist'][i.toString()]['s'] == 3){
 						var str = name(nbt['gt.invlist'][i.toString()]); 
-						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += "|耐久:" + parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 120000) + " mins";
+						if(nbt['gt.invlist'][i.toString()]['tag'] != undefined) str += " | 耐久: " + formatTime(parseInt(nbt['gt.invlist'][i.toString()]['tag']['gt.durability'] / 100));
 						return str;
 					}
 				}
