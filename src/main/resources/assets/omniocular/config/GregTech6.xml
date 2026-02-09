@@ -844,6 +844,7 @@
                 case "toolHeadRawUniversalSpade":{return "万用铲头毛坯";}
                 case "toolHeadScrewdriver":{return "螺丝刀头";}
 				case "toolHeadFile":{return "锉刀头";}
+		  		cass "toolHeadHammer":{return "锤头";}
             }
             return null;
         }
